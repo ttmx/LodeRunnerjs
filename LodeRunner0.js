@@ -45,39 +45,39 @@ class GameImages {
 		GameImages[name] = im;
 		im.src = GameImages.prefix + name + ".png";
 		im.onload =
-			function() { if( --GameImages.loading == 0 ) GameImages.next(); }	
-	}	
+			function() { if( --GameImages.loading == 0 ) GameImages.next(); }
+	}
 	static loadAll(next) {
 		GameImages.prefix =
 			"http://ctp.di.fct.unl.pt/miei/lap/projs/proj2020-3/files/images/"
 		// GameImages.prefix = "images/"		// allows offline working
  		GameImages.next = next;  // next is the action to start after loading
 		GameImages.loading = 0;
-  		GameImages.loadOne("brick"); 
-		GameImages.loadOne("chimney"); 
-		GameImages.loadOne("empty"); 
-		GameImages.loadOne("gold"); 
-		GameImages.loadOne("hero_falls_left"); 
-		GameImages.loadOne("hero_falls_right"); 
-		GameImages.loadOne("hero_on_ladder_left"); 
-		GameImages.loadOne("hero_on_ladder_right"); 
-		GameImages.loadOne("hero_on_rope_left"); 
-		GameImages.loadOne("hero_on_rope_right"); 
-		GameImages.loadOne("hero_runs_left"); 
-		GameImages.loadOne("hero_runs_right"); 
-		GameImages.loadOne("hero_shoots_left"); 
-		GameImages.loadOne("hero_shoots_right"); 
-		GameImages.loadOne("invalid"); 
-		GameImages.loadOne("ladder"); 
-		GameImages.loadOne("robot_falls_left"); 
-		GameImages.loadOne("robot_falls_right"); 
-		GameImages.loadOne("robot_on_ladder_left"); 
-		GameImages.loadOne("robot_on_ladder_right"); 
-		GameImages.loadOne("robot_on_rope_left"); 
-		GameImages.loadOne("robot_on_rope_right"); 
-		GameImages.loadOne("robot_runs_left"); 
-		GameImages.loadOne("robot_runs_right"); 
-		GameImages.loadOne("rope"); 
+  		GameImages.loadOne("brick");
+		GameImages.loadOne("chimney");
+		GameImages.loadOne("empty");
+		GameImages.loadOne("gold");
+		GameImages.loadOne("hero_falls_left");
+		GameImages.loadOne("hero_falls_right");
+		GameImages.loadOne("hero_on_ladder_left");
+		GameImages.loadOne("hero_on_ladder_right");
+		GameImages.loadOne("hero_on_rope_left");
+		GameImages.loadOne("hero_on_rope_right");
+		GameImages.loadOne("hero_runs_left");
+		GameImages.loadOne("hero_runs_right");
+		GameImages.loadOne("hero_shoots_left");
+		GameImages.loadOne("hero_shoots_right");
+		GameImages.loadOne("invalid");
+		GameImages.loadOne("ladder");
+		GameImages.loadOne("robot_falls_left");
+		GameImages.loadOne("robot_falls_right");
+		GameImages.loadOne("robot_on_ladder_left");
+		GameImages.loadOne("robot_on_ladder_right");
+		GameImages.loadOne("robot_on_rope_left");
+		GameImages.loadOne("robot_on_rope_right");
+		GameImages.loadOne("robot_runs_left");
+		GameImages.loadOne("robot_runs_right");
+		GameImages.loadOne("rope");
 		GameImages.loadOne("stone");
 	}
 }

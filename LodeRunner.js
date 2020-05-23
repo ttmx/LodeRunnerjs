@@ -111,15 +111,50 @@ class Stone extends PassiveActor {
 class Hero extends ActiveActor {
 	constructor(x, y) {
 		super(x, y, "hero_runs_left");
+		this.noCollision = ["empty","ladder","gold","rope"];
+		this.holds = ["brick","ladder"];
+		this.direction = "left";
+		this.action = "runs";
 	}
 	animation() {
 		var k = control.getKey();
         if( k == ' ' ) { alert('SHOOT') ; return; }
-        if( k == null ) return;
-        let [dx, dy] = k;
-        this.hide();
-        this.x += dx;
-        this.y += dy;
+		this.hide();
+		this.falling = this.noCollision.includes(control.world[this.x][this.y+1].imageName) &&
+			control.world[this.x][this.y].imageName !== "rope" && control.world[this.x][this.y+1].imageName !== "ladder";
+		if (this.falling){
+			this.y++;
+			this.action = "falls";
+		} else {
+			this.action = "runs";
+			if(control.world[this.x][this.y].imageName === "rope")
+				this.action = "on_rope";
+			else if (control.world[this.x][this.y].imageName === "ladder" &&
+				control.world[this.x][this.y+1].imageName === "ladder")
+				this.action = "on_ladder";
+			if (k != null) {
+				let [dx, dy] = k;
+				if (this.x + dx >= 0 && this.x + dx < WORLD_WIDTH &&
+					this.y + dy >= 0 && this.y + dy < WORLD_HEIGHT) {
+					if (this.noCollision.includes(control.world[this.x + dx][this.y].imageName)) {
+
+						this.x += dx;
+						if (dx === 1) {
+							this.direction = "right";
+						} else if (dx === -1) {
+							this.direction = "left";
+						}
+					}
+					if ((control.world[this.x][this.y].imageName === "ladder" ||
+						control.world[this.x][this.y + dy].imageName === "ladder") &&
+						this.noCollision.includes(control.world[this.x][this.y + dy].imageName)) {
+
+						this.y += dy;
+					}
+				}
+			}
+		}
+		this.imageName = `hero_${this.action}_${this.direction}`;
         this.show();
 	}
 }
@@ -179,7 +214,7 @@ class GameControl {
 			case 0: return null;
 			default: return String.fromCharCode(k);
 		// http://www.cambiaresearch.com/articles/15/javascript-char-codes-key-codes
-		};	
+		};
 	}
 	setupEvents() {
 		addEventListener("keydown", this.keyDownEvent, false);
