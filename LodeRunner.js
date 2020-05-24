@@ -134,20 +134,32 @@ class Hero extends ActiveActor {
 
 	}
 
+	isStanding() {
+		return control.world[this.x][this.y + 1].collides
+			|| control.world[this.x][this.y + 1].climbable;
+	}
+
+	isHanging() {
+		return control.world[this.x][this.y].hang;
+	}
+
+	isClimbing() {
+		return control.world[this.x][this.y].climbable;
+	}
+
+	isFalling() {
+		return !this.isStanding()
+			&& !this.isHanging()
+			&& !this.isClimbing();
+	}
+
 	act(k) {
 		// if(k == ' ')
 		// 	alert("shoot");
 
-		let wasFalling =
-			control.world[this.x][this.y + 1]
-			&& !control.world[this.x][this.y + 1].collides
-			&& control.world[this.x][this.y + 1]
-			&& !control.world[this.x][this.y + 1].climbable
-			&& !control.world[this.x][this.y].hang;
-
 		let wasClimbing = control.world[this.x][this.y].climbable;
 
-		if (wasFalling && !wasClimbing) {
+		if (this.isFalling()) {
 
 			if (this.inBounds(0, 1)) {
 
@@ -196,15 +208,6 @@ class Hero extends ActiveActor {
 
 		}
 
-		let isFalling =
-			control.world[this.x][this.y + 1]
-			&& !control.world[this.x][this.y + 1].collides
-			&& control.world[this.x][this.y + 1]
-			&& !control.world[this.x][this.y + 1].climbable
-			&& !control.world[this.x][this.y].hang;
-
-		let isClimbing = control.world[this.x][this.y].climbable;
-
 		this.action = 'runs';
 
 		if (control.world[this.x][this.y].imageName === "rope") {
@@ -213,11 +216,11 @@ class Hero extends ActiveActor {
 
 		}
 
-		if (isClimbing) {
+		if (this.isClimbing()) {
 
 			this.action = "on_ladder";
 
-		} else if (isFalling) {
+		} else if (this.isFalling()) {
 
 			this.action = "falls";
 
@@ -299,7 +302,7 @@ class GameControl {
 			case 38: case 81: case 73: return [0, -1]; //    UP, Q, I
 			case 39: case 80: case 76: return [1, 0];  // RIGHT, P, L
 			case 40: case 65: case 75: return [0, 1];  //  DOWN, A, K
-			case 32: return ["space","space"]; // Hackery hacks
+			case 32: return ["space", "space"]; // Hackery hacks
 			case 0: return null;
 			default: return String.fromCharCode(k);
 			// http://www.cambiaresearch.com/articles/15/javascript-char-codes-key-codes
@@ -332,13 +335,13 @@ class GameControl {
 // HTML FORM
 
 class KeyDisplay {
-	constructor(){}
-	draw(){}
+	constructor() { }
+	draw() { }
 
 }
 
-class RectDisplay extends KeyDisplay{
-	constructor(scene, x = 0, y = 0, width=100,height=30,cond = ["space","space"]) {
+class RectDisplay extends KeyDisplay {
+	constructor(scene, x = 0, y = 0, width = 100, height = 30, cond = ["space", "space"]) {
 		super();
 
 		this.scene = scene;
@@ -376,7 +379,7 @@ class RectDisplay extends KeyDisplay{
 
 }
 
-class ArrowDisplay extends KeyDisplay{
+class ArrowDisplay extends KeyDisplay {
 
 
 	constructor(scene, x = 0, y = 0, angle = 0, cond = [0, 0]) {
@@ -500,7 +503,7 @@ class ControlDisplay {
 
 						}
 
-						pctx.drawImage(GameImages[sprite],x * ACTOR_PIXELS_X, y * ACTOR_PIXELS_Y);
+						pctx.drawImage(GameImages[sprite], x * ACTOR_PIXELS_X, y * ACTOR_PIXELS_Y);
 
 					}
 
@@ -545,9 +548,9 @@ class ControlDisplay {
 			90 * Math.PI / 180,
 			[1, 0]);
 		let space = new RectDisplay(this.scene,
-			pos.x+10,pos.y + 110,
-			130,40,
-			["space","space"]);
+			pos.x + 10, pos.y + 110,
+			130, 40,
+			["space", "space"]);
 
 		requestAnimationFrame(() => { this.draw() })
 
