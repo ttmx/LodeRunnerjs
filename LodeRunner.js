@@ -127,10 +127,13 @@ class Hero extends ActiveActor {
 	}
 
 	inBounds(dx, dy) {
+		return this.x + dx >= 0 && this.x + dx < WORLD_WIDTH
+			&& this.y + dy >= 0 && this.y + dy < WORLD_HEIGHT;
+	}
 
-		return this.x + dx >= 0 && this.x + dx < WORLD_WIDTH &&
-			this.y + dy >= 0 && this.y + dy < WORLD_HEIGHT;
-
+	collides(dx, dy) {
+		return !this.inBounds(dx, dy)
+			|| control.world[this.x + dx][this.y + dy].collides;
 	}
 
 	isStanding() {
@@ -182,65 +185,29 @@ class Hero extends ActiveActor {
 		// if(k == ' ')
 		// 	alert("shoot");
 
-		let wasClimbing = control.world[this.x][this.y].climbable;
+		if (this.isFalling() && !this.collides(0, 1)) {
+			this.y++;
 
-		if (this.isFalling()) {
+		} else if (k != null) {
+			let [dx, dy] = k;
+			if (!this.collides(dx, dy)) {
+				this.x += dx;
+				this.direction = ['left', this.direction, 'right'][dx + 1];
+				if (this.isClimbing()
+					|| (dy === 1
+						&& (this.isHanging() || control.world[this.x][this.y + dy].climbable))) {
 
-			if (this.inBounds(0, 1)) {
-
-				this.y++;
-
-			}
-
-		} else {
-
-			if (k != null) {
-
-				let [dx, dy] = k;
-
-				if (this.inBounds(dx, dy)) {
-
-					if (control.world[this.x + dx][this.y + dy] && !control.world[this.x + dx][this.y + dy].collides) {
-
-						this.x += dx;
-
-						this.direction = ['left', this.direction, 'right'][dx + 1];
-
-						if (dy < 0 && wasClimbing) {
-
-							this.y += dy;
-
-						} else if (dy > 0 && (wasClimbing
-							|| (control.world[this.x][this.y + dy]
-								&& control.world[this.x][this.y + dy].climbable))) {
-
-							this.y += dy;
-
-						}
-
-						if (dy > 0
-							&& control.world[this.x][this.y].hang) {
-
-							this.y += dy;
-
-						}
-
-					}
-
+					this.y += dy;
 				}
-
 			}
-
+			this.imageName = `hero_${this.getAction()}_${this.direction}`;
 		}
 	}
 
 	animation() {
-
 		this.hide();
-
 		control.lastKey = control.getKey();
 		this.act(control.lastKey);
-		this.imageName = `hero_${this.getAction()}_${this.direction}`;
 		this.show();
 	}
 }
