@@ -137,7 +137,7 @@ class Hero extends ActiveActor {
 	}
 
 	isStanding() {
-		return control.world[this.x][this.y + 1].collides
+		return this.collides(0, 1)
 			|| control.world[this.x][this.y + 1].climbable;
 	}
 
@@ -185,7 +185,7 @@ class Hero extends ActiveActor {
 		// if(k == ' ')
 		// 	alert("shoot");
 
-		if (this.isFalling() && !this.collides(0, 1)) {
+		if (this.isFalling()) {
 			this.y++;
 
 		} else if (k != null) {
