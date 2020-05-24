@@ -273,6 +273,9 @@ class GameControl {
 		this.world = this.createMatrix();
 		this.worldActive = this.createMatrix();
 		this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+		this.ctx.rect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+		this.ctx.fillStyle = "#fff";
+		this.ctx.fill();
 
 	}
 	loadLevel(level) {
@@ -345,11 +348,11 @@ class KeyDisplay {
 			&& this.cond[0] == control.lastKey[0]
 			&& this.cond[1] == control.lastKey[1]) {
 
-			this.scene.ctx.fillStyle = '#212121';
+			this.scene.ctx.fillStyle = '#81a1c1';
 
 		} else {
 
-			this.scene.ctx.fillStyle = '#515151';
+			this.scene.ctx.fillStyle = '#4C566A';
 
 		}
 
@@ -395,7 +398,7 @@ class ControlDisplay {
 		this.controls = document.createElement('canvas');
 		this.controls.height = this.game.height;
 		this.controls.width = this.game.height;
-		this.controls.style.border = '1px solid #000000';
+		this.controls.style.border = '1px solid #81a1c1';
 		this.ctx = this.controls.getContext('2d');
 
 		wrapper.append(this.controls);
