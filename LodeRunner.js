@@ -162,7 +162,9 @@ class Hero extends ActiveActor {
 				return "on_ladder";
 				break;
 
+			case "gold":
 			case "empty":
+			case "chimney":
 				if (this.isFalling()) {
 					return "falls";
 				} else {
