@@ -124,7 +124,6 @@ class Hero extends ActiveActor {
 	constructor(x, y) {
 		super(x, y, "hero_runs_left");
 		this.direction = "left";
-		this.action = "runs";
 	}
 
 	inBounds(dx, dy) {
@@ -151,6 +150,30 @@ class Hero extends ActiveActor {
 		return !this.isStanding()
 			&& !this.isHanging()
 			&& !this.isClimbing();
+	}
+
+	getAction() {
+		switch (control.world[this.x][this.y].imageName) {
+			case "rope":
+				return "on_rope";
+				break;
+
+			case "ladder":
+				return "on_ladder";
+				break;
+
+			case "empty":
+				if (this.isFalling()) {
+					return "falls";
+				} else {
+					return "runs";
+				}
+				break;
+
+			default:
+				throw "Unnexpected background";
+				break;
+		}
 	}
 
 	act(k) {
@@ -207,25 +230,6 @@ class Hero extends ActiveActor {
 			}
 
 		}
-
-		this.action = 'runs';
-
-		if (control.world[this.x][this.y].imageName === "rope") {
-
-			this.action = "on_rope";
-
-		}
-
-		if (this.isClimbing()) {
-
-			this.action = "on_ladder";
-
-		} else if (this.isFalling()) {
-
-			this.action = "falls";
-
-		}
-
 	}
 
 	animation() {
@@ -234,8 +238,7 @@ class Hero extends ActiveActor {
 
 		control.lastKey = control.getKey();
 		this.act(control.lastKey);
-
-		this.imageName = `hero_${this.action}_${this.direction}`;
+		this.imageName = `hero_${this.getAction()}_${this.direction}`;
 		this.show();
 	}
 }
