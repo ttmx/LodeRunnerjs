@@ -200,8 +200,8 @@ class Hero extends ActiveActor {
 					this.y += dy;
 				}
 			}
-			this.imageName = `hero_${this.getAction()}_${this.direction}`;
 		}
+		this.imageName = `hero_${this.getAction()}_${this.direction}`;
 	}
 
 	animation() {
