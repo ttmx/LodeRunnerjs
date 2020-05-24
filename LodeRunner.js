@@ -138,7 +138,7 @@ class Hero extends ActiveActor {
 
 	isStanding() {
 		return this.collides(0, 1)
-			|| control.world[this.x][this.y + 1].climbable;
+			|| (!this.isClimbing() && control.world[this.x][this.y + 1].climbable);
 	}
 
 	isHanging() {
@@ -195,7 +195,7 @@ class Hero extends ActiveActor {
 				this.direction = ['left', this.direction, 'right'][dx + 1];
 				if (this.isClimbing()
 					|| (dy === 1
-						&& (this.isHanging() || control.world[this.x][this.y + dy].climbable))) {
+						&& (this.isHanging() || this.isStanding()))) {
 
 					this.y += dy;
 				}
