@@ -44,9 +44,12 @@ class PassiveActor extends Actor {
 }
 
 class ActiveActor extends Actor {
-	constructor(x, y, imageName) {
+	constructor(x, y, imageName, direction, goldLimit) {
 		super(x, y, imageName);
 		this.time = 0;	// timestamp used in the control of the animations
+		this.direction = direction;
+		this.collectedGold = 0;
+		this.goldLimit = goldLimit;
 	}
 	show() {
 		control.worldActive[this.x][this.y] = this;
@@ -57,75 +60,6 @@ class ActiveActor extends Actor {
 		control.world[this.x][this.y].draw(this.x, this.y);
 	}
 	animation() {
-	}
-}
-
-class Brick extends PassiveActor {
-	constructor(x, y) {
-		super(x, y, "brick");
-		this.collides = true;
-	}
-}
-
-class Chimney extends PassiveActor {
-	constructor(x, y) { super(x, y, "chimney"); }
-}
-
-class Empty extends PassiveActor {
-	constructor() { super(-1, -1, "empty"); }
-	show() { }
-	hide() { }
-}
-
-class Gold extends PassiveActor {
-	constructor(x, y) { super(x, y, "gold"); }
-}
-
-class Invalid extends PassiveActor {
-	constructor(x, y) { super(x, y, "invalid"); }
-}
-
-class Ladder extends PassiveActor {
-	constructor(x, y) {
-		super(x, y, "ladder");
-		this.climbable = true;
-		this.visible = false;
-	}
-	show() {
-		if (this.visible)
-			super.show();
-	}
-	hide() {
-		// if( this.visible )
-		// super.hide();
-	}
-	makeVisible() {
-		this.visible = true;
-		this.show();
-	}
-}
-
-class Rope extends PassiveActor {
-	constructor(x, y) {
-		super(x, y, "rope");
-		this.hang = true;
-	}
-}
-
-class Stone extends PassiveActor {
-	constructor(x, y) {
-		super(x, y, "stone");
-		this.collides = true;
-
-	}
-}
-
-class Hero extends ActiveActor {
-	constructor(x, y) {
-		super(x, y, "hero_runs_left");
-		this.direction = "left";
-		this.collectedGold = 0;
-		this.goldLimit = Number.POSITIVE_INFINITY;
 	}
 
 	inBounds(dx, dy) {
@@ -196,6 +130,90 @@ class Hero extends ActiveActor {
 		}
 	}
 
+	attemptMove(dx, dy) {
+		if (!this.collides(dx, dy)) {
+			if (dx != 0) {
+				this.x += dx;
+				this.direction = ['left', this.direction, 'right'][dx + 1];
+				return true;
+			}
+			if (this.isClimbing()
+				|| (dy === 1
+					&& (this.isHanging() || this.isStanding()))) {
+
+				this.y += dy;
+				return true;
+			}
+		}
+		return false;
+	}
+}
+
+class Brick extends PassiveActor {
+	constructor(x, y) {
+		super(x, y, "brick");
+		this.collides = true;
+	}
+}
+
+class Chimney extends PassiveActor {
+	constructor(x, y) { super(x, y, "chimney"); }
+}
+
+class Empty extends PassiveActor {
+	constructor() { super(-1, -1, "empty"); }
+	show() { }
+	hide() { }
+}
+
+class Gold extends PassiveActor {
+	constructor(x, y) { super(x, y, "gold"); }
+}
+
+class Invalid extends PassiveActor {
+	constructor(x, y) { super(x, y, "invalid"); }
+}
+
+class Ladder extends PassiveActor {
+	constructor(x, y) {
+		super(x, y, "ladder");
+		this.climbable = true;
+		this.visible = false;
+	}
+	show() {
+		if (this.visible)
+			super.show();
+	}
+	hide() {
+		// if( this.visible )
+		// super.hide();
+	}
+	makeVisible() {
+		this.visible = true;
+		this.show();
+	}
+}
+
+class Rope extends PassiveActor {
+	constructor(x, y) {
+		super(x, y, "rope");
+		this.hang = true;
+	}
+}
+
+class Stone extends PassiveActor {
+	constructor(x, y) {
+		super(x, y, "stone");
+		this.collides = true;
+
+	}
+}
+
+class Hero extends ActiveActor {
+	constructor(x, y) {
+		super(x, y, "hero_runs_left", "left", Number.POSITIVE_INFINITY);
+	}
+
 	act(k) {
 		// if(k == ' ')
 		// 	alert("shoot");
@@ -205,16 +223,7 @@ class Hero extends ActiveActor {
 
 		} else if (k != null) {
 			let [dx, dy] = k;
-			if (!this.collides(dx, dy)) {
-				this.x += dx;
-				this.direction = ['left', this.direction, 'right'][dx + 1];
-				if (this.isClimbing()
-					|| (dy === 1
-						&& (this.isHanging() || this.isStanding()))) {
-
-					this.y += dy;
-				}
-			}
+			super.attemptMove(dx, dy);
 		}
 		this.imageName = `hero_${this.backgroundAction()}_${this.direction}`;
 	}
@@ -229,9 +238,61 @@ class Hero extends ActiveActor {
 
 class Robot extends ActiveActor {
 	constructor(x, y) {
-		super(x, y, "robot_runs_right");
+		super(x, y, "robot_runs_right", "right", 1);
 		this.dx = 1;
 		this.dy = 0;
+	}
+
+	getMovesList() {
+		let moves = [
+			[[-1, 0], null],
+			[[0, -1], null],
+			[[1, 0], null],
+			[[0, 1], null]
+		];
+
+		for (let i = 0; i < moves.length; i++) {
+			const [dx, dy] = moves[i][0];
+			moves[i][1] = Math.hypot(this.x - hero.x + dx, this.y - hero.y + dy);
+		}
+		moves.push([null, Math.hypot(this.x - hero.x, this.y - hero.y)]);
+		moves.sort((a, b) => a[1] - b[1]);
+
+		moves = (moves => {
+			let a = [];
+			moves.forEach(move => {
+				a.push(move[0]);
+			});
+			return a;
+		})(moves);
+
+		return moves;
+	}
+
+	moveTowardsHero() {
+		if (this.isFalling()) {
+			this.y++;
+
+		} else {
+			let moves = this.getMovesList();
+			if (moves != null) {
+				let moved = false;
+				for (let i = 0; i < moves.length && moves[i] != null && !moved; i++) {
+					const [dx, dy] = moves[i];
+					moved = super.attemptMove(dx, dy);
+				}
+			}
+		}
+		this.imageName = `robot_${this.backgroundAction()}_${this.direction}`;
+	}
+
+	animation() {
+		let difficulty = 3;
+		if (this.time % difficulty == 0) {
+			this.hide();
+			this.moveTowardsHero();
+			this.show();
+		}
 	}
 }
 
