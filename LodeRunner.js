@@ -124,6 +124,8 @@ class Hero extends ActiveActor {
 	constructor(x, y) {
 		super(x, y, "hero_runs_left");
 		this.direction = "left";
+		this.collectedGold = 0;
+		this.goldLimit = Number.POSITIVE_INFINITY;
 	}
 
 	inBounds(dx, dy) {
@@ -155,7 +157,17 @@ class Hero extends ActiveActor {
 			&& !this.isClimbing();
 	}
 
-	getAction() {
+	canPickUpGold() {
+		return this.collectedGold < this.goldLimit;
+	}
+
+	// pre: background is gold
+	pickUpGold() {
+		this.collectedGold++;
+		control.world[this.x][this.y].hide();
+	}
+
+	backgroundAction() {
 		switch (control.world[this.x][this.y].imageName) {
 			case "rope":
 				return "on_rope";
@@ -166,6 +178,9 @@ class Hero extends ActiveActor {
 				break;
 
 			case "gold":
+				if (this.canPickUpGold()) {
+					this.pickUpGold();
+				}
 			case "empty":
 			case "chimney":
 				if (this.isFalling()) {
@@ -201,7 +216,7 @@ class Hero extends ActiveActor {
 				}
 			}
 		}
-		this.imageName = `hero_${this.getAction()}_${this.direction}`;
+		this.imageName = `hero_${this.backgroundAction()}_${this.direction}`;
 	}
 
 	animation() {
