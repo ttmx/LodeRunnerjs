@@ -261,6 +261,10 @@ class Robot extends ActiveActor {
 		return moves;
 	}
 
+	isFalling() {
+		return super.isFalling() && !(control.worldActive[this.x][this.y + 1] instanceof Robot);
+	}
+
 	moveTowardsHero() {
 		if (this.isFalling()) {
 			this.y++;
@@ -271,7 +275,9 @@ class Robot extends ActiveActor {
 				let moved = false;
 				for (let i = 0; i < moves.length && moves[i] != null && !moved; i++) {
 					const [dx, dy] = moves[i];
-					moved = super.attemptMove(dx, dy);
+					if (!(control.worldActive[this.x + dx][this.y + dy] instanceof Robot)) {
+						moved = super.attemptMove(dx, dy);
+					}
 				}
 			}
 		}
