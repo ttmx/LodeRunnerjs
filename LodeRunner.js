@@ -176,20 +176,12 @@ class Invalid extends PassiveActor {
 
 class Ladder extends PassiveActor {
 	constructor(x, y) {
-		super(x, y, "ladder");
+		super(x, y, "empty");
 		this.climbable = true;
-		this.visible = false;
 	}
-	show() {
-		if (this.visible)
-			super.show();
-	}
-	hide() {
-		// if( this.visible )
-		// super.hide();
-	}
+
 	makeVisible() {
-		this.visible = true;
+		this.imageName = "ladder";
 		this.show();
 	}
 }
