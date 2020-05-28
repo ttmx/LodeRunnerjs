@@ -240,6 +240,15 @@ class Robot extends ActiveActor {
 		super(x, y, "robot_runs_right", "right", 1);
 		this.dx = 1;
 		this.dy = 0;
+		this.goldDropAt = null;
+		this.nextGoldPickup = 0;
+	}
+
+	pickUpGold() {
+		if (this.time >= this.nextGoldPickup) {
+			super.pickUpGold();
+			this.goldDropAt = this.time + 10 * ANIMATION_EVENTS_PER_SECOND;
+		}
 	}
 
 	getMovesList() {
@@ -291,11 +300,40 @@ class Robot extends ActiveActor {
 		this.imageName = `robot_${this.backgroundAction()}_${this.direction}`;
 	}
 
+	dropGoldAt(dx) {
+		if (control.world[this.x + dx][this.y + 1].collides && control.world[this.x + dx][this.y] instanceof Empty
+			&& control.worldActive[this.x + dx][this.y] instanceof Empty) {
+
+			control.world[this.x + dx][this.y] = new Gold(this.x + dx, this.y);
+			control.world[this.x + dx][this.y].show();
+			this.collectedGold = 0;
+			this.goldDropAt = null;
+			this.nextGoldPickup = this.time + 2 * ANIMATION_EVENTS_PER_SECOND;
+		}
+	}
+
+	attemptDropGold() {
+		let drop = (direction => {
+			this.dropGoldAt(direction);
+			if (this.goldDropAt != null) {
+				this.dropGoldAt(-direction);
+			}
+		})
+		if (this.direction == "left") {
+			drop(1);
+		} else {
+			drop(-1);
+		}
+	}
+
 	animation() {
 		let difficulty = 3;
 		if (this.time % difficulty == 0) {
 			this.hide();
 			this.moveTowardsHero();
+			if (this.goldDropAt != null && this.time >= this.goldDropAt) {
+				this.attemptDropGold();
+			}
 			this.show();
 		}
 	}
