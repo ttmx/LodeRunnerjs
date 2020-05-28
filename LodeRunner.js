@@ -125,7 +125,7 @@ class ActiveActor extends Actor {
 				break;
 
 			default:
-				throw "Unnexpected background";
+				throw "Unexpected background";
 				break;
 		}
 	}
@@ -221,6 +221,12 @@ class Hero extends ActiveActor {
 		this.imageName = `hero_${this.backgroundAction()}_${this.direction}`;
 	}
 
+	pickUpGold() {
+		super.pickUpGold();
+		if (this.collectedGold >= control.worldGold)
+			control.showExit();
+	}
+
 	animation() {
 		this.hide();
 		control.lastKey = control.getKey();
@@ -303,6 +309,7 @@ class GameControl {
 		this.key = 0;
 		this.lastKey = null;
 		this.time = 0;
+		this.worldGold = 0;
 		empty = new Empty();	// only one empty actor needed
 		this.ctx = document.getElementById("canvas1").getContext('2d');
 		this.world = this.createMatrix();
@@ -331,6 +338,7 @@ class GameControl {
 
 	}
 	loadLevel(level) {
+		this.worldGold = 0;
 		if (level < 1 || level > MAPS.length)
 			fatalError("Invalid level " + level)
 		this.clearLevel();
@@ -339,8 +347,19 @@ class GameControl {
 			for (let y = 0; y < WORLD_HEIGHT; y++) {
 				// x/y reversed because map stored by lines
 				GameFactory.actorFromCode(map[y][x], x, y);
+				this.worldGold += this.world[x][y] instanceof Gold;
+			}
+
+	}
+
+	showExit() {
+		for (let x = 0; x < WORLD_WIDTH; x++)
+			for (let y = 0; y < WORLD_HEIGHT; y++) {
+				if(this.world[x][y] instanceof Ladder)
+					this.world[x][y].makeVisible();
 			}
 	}
+
 	getKey() {
 		let k = control.key;
 		control.key = 0;
