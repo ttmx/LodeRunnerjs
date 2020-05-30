@@ -272,13 +272,6 @@ class Hero extends ActiveActor {
 		this.act(control.lastKey);
 		this.show();
 	}
-	attemptMove(dx, dy) {
-		if(this.collectedGold >= control.worldGold && this.y+dy<=-1){
-			control.winLevel();
-		}else{
-			super.attemptMove(dx, dy);
-		}
-	}
 }
 
 class Robot extends ActiveActor {
@@ -432,7 +425,7 @@ class GameControl {
 			this.highscores = [];
 		empty = new Empty();	// only one empty actor needed
 		this.ctx = document.getElementById("canvas1").getContext('2d');
-		this.loadLevel(this.currentLevel+1);
+		this.loadLevel(this.currentLevel + 1);
 		this.setupEvents();
 	}
 	createMatrix() { // stored by columns
@@ -452,7 +445,7 @@ class GameControl {
 		this.time = 0;
 		this.worldGold = 0;
 		this.holes = [];
-		this.winCondition = (() => control.worldGold == 0 && hero.y == 0);
+		this.winCondition = (() => { return control.worldGold == hero.collectedGold && hero.y == 0 });
 		this.world = this.createMatrix();
 		this.worldActive = this.createMatrix();
 	}
@@ -544,6 +537,9 @@ class GameControl {
 		control.time++;
 		control.updateActiveActorAnimations();
 		control.updateHoles();
+		if (control.winCondition()) {
+			control.winLevel();
+		}
 	}
 	keyDownEvent(k) {
 		control.key = k.keyCode;
@@ -552,41 +548,41 @@ class GameControl {
 	}
 
 
-	storeHighscore(){
+	storeHighscore() {
 
 		let timeSpan = new Date().getTime() - this.starttime;
 		let highscores = JSON.parse(localStorage.getItem('highscores'));
-		if(highscores === null)
+		if (highscores === null)
 			highscores = [];
 		if(highscores[this.currentLevel]>timeSpan || isNaN(highscores[this.currentLevel]))
 			highscores[this.currentLevel] = timeSpan;
-		localStorage.setItem('highscores',JSON.stringify(highscores));
+		localStorage.setItem('highscores', JSON.stringify(highscores));
 	}
 
-	drawWin(){
+	drawWin() {
 		this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 		this.ctx.font = "20px bitFont";
 		this.ctx.textAlign = "center";
-		let interval = 1000/60;
+		let interval = 1000 / 60;
 		let iteration = 0;
-		let animator = setInterval(()=>{
+		let animator = setInterval(() => {
 			iteration++;
 			this.ctx.fillStyle = "#81A1C1"
-			this.ctx.fillRect(0,0,iteration*(interval/5000)*this.ctx.canvas.width,this.ctx.canvas.height);
+			this.ctx.fillRect(0, 0, iteration * (interval / 5000) * this.ctx.canvas.width, this.ctx.canvas.height);
 			this.ctx.fillStyle = "#4C566A";
-			this.ctx.fillRect(100,100,300,50);
+			this.ctx.fillRect(100, 100, 300, 50);
 			this.ctx.fillStyle = "#81A1C1"
-			this.ctx.fillText("Level Completed",this.ctx.canvas.width/2, this.ctx.canvas.height/2);
-			if(iteration>= 5000/interval)
+			this.ctx.fillText("Level Completed", this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
+			if (iteration >= 5000 / interval)
 				clearInterval(animator);
-		},interval);
+		}, interval);
 	}
 
-	winLevel(){
+	winLevel() {
 		this.clearLevel();
 		this.storeHighscore();
 		this.drawWin();
-		setTimeout(()=>{this.loadLevel(this.currentLevel+1)},6000);
+		setTimeout(() => { this.loadLevel(this.currentLevel + 1) }, 6000);
 
 	}
 }
@@ -836,7 +832,7 @@ class ControlDisplay {
 			["space", "space"]);
 
 		let time = new TimeDisplay(this.scene,
-			10,20);
+			10, 20);
 
 		requestAnimationFrame(() => { this.draw() })
 
