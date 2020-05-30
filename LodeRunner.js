@@ -233,6 +233,13 @@ class Hero extends ActiveActor {
 		this.act(control.lastKey);
 		this.show();
 	}
+	attemptMove(dx, dy) {
+		if(this.y+dy<=-1){
+			control.winLevel();
+		}else{
+			super.attemptMove(dx, dy);
+		}
+	}
 }
 
 class Robot extends ActiveActor {
@@ -309,6 +316,7 @@ class GameControl {
 		this.key = 0;
 		this.lastKey = null;
 		this.time = 0;
+		this.currentLevel = 0;
 		this.worldGold = 0;
 		empty = new Empty();	// only one empty actor needed
 		this.ctx = document.getElementById("canvas1").getContext('2d');
@@ -342,7 +350,12 @@ class GameControl {
 		if (level < 1 || level > MAPS.length)
 			fatalError("Invalid level " + level)
 		this.clearLevel();
+		this.starttime = new Date().getTime();
 		let map = MAPS[level - 1];  // -1 because levels start at 1
+
+		localStorage.setItem('currentLevel',level);
+		this.currentLevel = level;
+
 		for (let x = 0; x < WORLD_WIDTH; x++)
 			for (let y = 0; y < WORLD_HEIGHT; y++) {
 				// x/y reversed because map stored by lines
@@ -394,6 +407,30 @@ class GameControl {
 		control.key = k.keyCode;
 	}
 	keyUpEvent(k) {
+	}
+
+
+	storeHighscore(){
+
+		let timeSpan = new Date().getTime() - this.starttime;
+		let highscores = localstorage.getItem('highscores');
+		if(highscores === null)
+			highscores = [];
+		if(highscores[this.currentLevel]>timeSpan)
+			highscores[this.currentLevel] = timeSpan;
+		localStorage.setItem('highscores',highscores);
+	}
+
+	drawWin(){
+		this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+
+	}
+
+	winLevel(){
+		this.storeHighscore();
+		this.drawWin();
+
+
 	}
 }
 
