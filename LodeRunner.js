@@ -250,12 +250,11 @@ class Hero extends ActiveActor {
 
 		} else if (k != null) {
 			let [dx, dy] = k;
-			this.attemptMove(dx, dy);
 			if (dy === "space") {
 				this.shoot();
 				this.imageName = `hero_shoots_${this.direction}`;
 			} else {
-				super.attemptMove(dx, dy);
+				this.attemptMove(dx, dy);
 				this.imageName = `hero_${this.backgroundAction()}_${this.direction}`;
 			}
 		}
