@@ -216,7 +216,7 @@ class Hero extends ActiveActor {
 
 		} else if (k != null) {
 			let [dx, dy] = k;
-			super.attemptMove(dx, dy);
+			this.attemptMove(dx, dy);
 		}
 		this.imageName = `hero_${this.backgroundAction()}_${this.direction}`;
 	}
@@ -234,7 +234,7 @@ class Hero extends ActiveActor {
 		this.show();
 	}
 	attemptMove(dx, dy) {
-		if(this.y+dy<=-1){
+		if(this.collectedGold >= control.worldGold && this.y+dy<=-1){
 			control.winLevel();
 		}else{
 			super.attemptMove(dx, dy);
@@ -354,13 +354,14 @@ class GameControl {
 		this.key = 0;
 		this.lastKey = null;
 		this.time = 0;
-		this.currentLevel = 0;
+		this.currentLevel = parseInt(localStorage.getItem('currentLevel'));
+		this.highscores = JSON.parse(localStorage.getItem('highscores'));
 		this.worldGold = 0;
 		empty = new Empty();	// only one empty actor needed
 		this.ctx = document.getElementById("canvas1").getContext('2d');
 		this.world = this.createMatrix();
 		this.worldActive = this.createMatrix();
-		this.loadLevel(1);
+		this.loadLevel(this.currentLevel+1);
 		this.setupEvents();
 	}
 	createMatrix() { // stored by columns
@@ -385,13 +386,14 @@ class GameControl {
 	}
 	loadLevel(level) {
 		this.worldGold = 0;
+		level = (length+1)%MAPS.length;
 		if (level < 1 || level > MAPS.length)
 			fatalError("Invalid level " + level)
 		this.clearLevel();
 		this.starttime = new Date().getTime();
 		let map = MAPS[level - 1];  // -1 because levels start at 1
 
-		localStorage.setItem('currentLevel',level);
+		localStorage.setItem('currentLevel',level-1);
 		this.currentLevel = level;
 
 		for (let x = 0; x < WORLD_WIDTH; x++)
@@ -451,23 +453,38 @@ class GameControl {
 	storeHighscore(){
 
 		let timeSpan = new Date().getTime() - this.starttime;
-		let highscores = localstorage.getItem('highscores');
+		let highscores = JSON.parse(localStorage.getItem('highscores'));
 		if(highscores === null)
 			highscores = [];
-		if(highscores[this.currentLevel]>timeSpan)
+		if(highscores[this.currentLevel]>timeSpan || highscores[this.currentLevel] == null)
 			highscores[this.currentLevel] = timeSpan;
-		localStorage.setItem('highscores',highscores);
+		localStorage.setItem('highscores',JSON.stringify(highscores));
 	}
 
 	drawWin(){
 		this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-
+		this.ctx.font = "30px Ubuntu";
+		this.ctx.textAlign = "center";
+		let interval = 1000/60;
+		let iteration = 0;
+		let animator = setInterval(()=>{
+			iteration++;
+			this.ctx.fillStyle = "#81A1C1"
+			this.ctx.fillRect(0,0,iteration*(interval/5000)*this.ctx.canvas.width,this.ctx.canvas.height);
+			this.ctx.fillStyle = "#4C566A";
+			this.ctx.fillRect(100,100,300,50);
+			this.ctx.fillStyle = "#81A1C1"
+			this.ctx.fillText("Level Completed",this.ctx.canvas.width/2, this.ctx.canvas.height/2);
+			if(iteration>= 5000/interval)
+				clearInterval(animator);
+		},interval);
 	}
 
 	winLevel(){
+		this.clearLevel();
 		this.storeHighscore();
 		this.drawWin();
-
+		setTimeout(()=>{this.loadLevel(this.currentLevel+1)},6000);
 
 	}
 }
@@ -475,13 +492,34 @@ class GameControl {
 
 // HTML FORM
 
-class KeyDisplay {
+class Display {
 	constructor() { }
 	draw() { }
 
 }
 
-class RectDisplay extends KeyDisplay {
+class TimeDisplay extends Display {
+	constructor(scene, x = 0, y = 0) {
+		super();
+
+		this.scene = scene;
+		this.scene.objects.push(this);
+
+		this.x = x;
+		this.y = y;
+
+	}
+
+	draw() {
+		this.scene.ctx.font = "20px Ubuntu";
+		this.scene.ctx.fillStyle = "#BF616A";
+		this.scene.ctx.fillText("Time: "+ ((new Date().getTime()-control.starttime)/1000).toFixed(1) + "s" ,this.x, this.y);
+		this.scene.ctx.fillText("Lowest: "+ (control.highscores[control.currentLevel]/1000).toFixed(1) + "s" ,this.x, this.y+25);
+	}
+
+}
+
+class RectDisplay extends Display {
 	constructor(scene, x = 0, y = 0, width = 100, height = 30, cond = ["space", "space"]) {
 		super();
 
@@ -520,7 +558,7 @@ class RectDisplay extends KeyDisplay {
 
 }
 
-class ArrowDisplay extends KeyDisplay {
+class ArrowDisplay extends Display {
 
 
 	constructor(scene, x = 0, y = 0, angle = 0, cond = [0, 0]) {
@@ -692,6 +730,9 @@ class ControlDisplay {
 			pos.x + 10, pos.y + 110,
 			130, 40,
 			["space", "space"]);
+
+		let time = new TimeDisplay(this.scene,
+			10,20);
 
 		requestAnimationFrame(() => { this.draw() })
 
