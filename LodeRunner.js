@@ -14,7 +14,6 @@ let empty, hero, control;
 
 class Actor {
 	constructor(x, y, imageName) {
-
 		this.x = x;
 		this.y = y;
 		this.imageName = imageName;
@@ -220,7 +219,7 @@ class Hero extends ActiveActor {
 		if (control.world[this.x + direction][this.y + 1].breaks
 			&& !control.world[this.x + direction][this.y].collides) {
 
-			control.broken.push(
+			control.holes.push(
 				[control.time + 5 * ANIMATION_EVENTS_PER_SECOND,
 				control.world[this.x + direction][this.y + 1]]);
 
@@ -327,8 +326,8 @@ class Robot extends ActiveActor {
 	}
 
 	isInBrokenByPlayer(x, y) {
-		for (let i = 0; i < control.broken.length; i++) {
-			const element = control.broken[i][1];
+		for (let i = 0; i < control.holes.length; i++) {
+			const element = control.holes[i][1];
 			if (x == element.x && y == element.y) {
 				return true;
 			}
@@ -422,9 +421,7 @@ class Robot extends ActiveActor {
 class GameControl {
 	constructor() {
 		control = this;
-		this.key = 0;
-		this.lastKey = null;
-		this.time = 0;
+		this.defaultGameLogic();
 		this.currentLevel = parseInt(localStorage.getItem('currentLevel'));
 		console.log(this.currentLevel);
 		if(isNaN(this.currentLevel))
@@ -433,12 +430,9 @@ class GameControl {
 		this.highscores = JSON.parse(localStorage.getItem('highscores'));
 		if(this.highscores === null)
 			this.highscores = [];
-		this.worldGold = 0;
 		empty = new Empty();	// only one empty actor needed
 		this.ctx = document.getElementById("canvas1").getContext('2d');
-		this.world = this.createMatrix();
-		this.worldActive = this.createMatrix();
-		this.loadLevel(this.currentLevel);
+		this.loadLevel(this.currentLevel+1);
 		this.setupEvents();
 	}
 	createMatrix() { // stored by columns
@@ -451,10 +445,21 @@ class GameControl {
 		}
 		return matrix;
 	}
-	clearLevel() {
 
+	defaultGameLogic() {
+		this.key = 0;
+		this.lastKey = null;
+		this.time = 0;
+		this.worldGold = 0;
+		this.holes = [];
+		this.winCondition = (() => control.worldGold == 0 && hero.y == 0);
 		this.world = this.createMatrix();
 		this.worldActive = this.createMatrix();
+	}
+
+	clearLevel() {
+
+		this.defaultGameLogic();
 		this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 		this.ctx.rect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 		this.ctx.fillStyle = "#fff";
@@ -469,18 +474,18 @@ class GameControl {
 			fatalError("Invalid level " + level)
 		this.clearLevel();
 		this.starttime = new Date().getTime();
-		let map = MAPS[level];  // -1 because levels start at 1
-
-		localStorage.setItem('currentLevel',level+1);
 		this.currentLevel = level+1;
-
-		for (let x = 0; x < WORLD_WIDTH; x++)
+		localStorage.setItem('currentLevel',level+1);
+		let map = MAPS[level];  // -1 because levels start at 1
+		for (let x = 0; x < WORLD_WIDTH; x++) {
 			for (let y = 0; y < WORLD_HEIGHT; y++) {
 				// x/y reversed because map stored by lines
 				GameFactory.actorFromCode(map[y][x], x, y);
-				this.worldGold += this.world[x][y] instanceof Gold;
+				if (this.world[x][y] instanceof Gold) {
+					this.worldGold++;
+				}
 			}
-
+		}
 	}
 
 	showExit() {
@@ -510,27 +515,35 @@ class GameControl {
 		addEventListener("keyup", this.keyUpEvent, false);
 		setInterval(this.animationEvent, 1000 / ANIMATION_EVENTS_PER_SECOND);
 	}
-	animationEvent() {
-		control.time++;
+
+	updateActiveActorAnimations() {
 		for (let x = 0; x < WORLD_WIDTH; x++) {
 			for (let y = 0; y < WORLD_HEIGHT; y++) {
-				let a = control.worldActive[x][y];
-				if (a.time < control.time) {
-					a.time = control.time;
-					a.animation();
+				let activeActor = this.worldActive[x][y];
+				if (activeActor.time < this.time) {
+					activeActor.time = this.time;
+					activeActor.animation();
 				}
 			}
 		}
-		for (let i = 0; i < control.broken.length; i++) {
-			const [regenTime, block] = control.broken[i];
-			if (control.time >= regenTime) {
-				control.world[block.x][block.y] = block;
-				control.worldActive[block.x][block.y] = empty;
+	}
+
+	updateHoles() {
+		for (let i = 0; i < this.holes.length; i++) {
+			const [regenTime, block] = this.holes[i];
+			if (this.time >= regenTime) {
+				this.world[block.x][block.y] = block;
+				this.worldActive[block.x][block.y] = empty;
 				block.show();
-				control.broken.shift();
+				this.holes.shift();
 				i--;
 			}
 		}
+	}
+	animationEvent() {
+		control.time++;
+		control.updateActiveActorAnimations();
+		control.updateHoles();
 	}
 	keyDownEvent(k) {
 		control.key = k.keyCode;
