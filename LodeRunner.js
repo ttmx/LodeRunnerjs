@@ -317,7 +317,16 @@ class Robot extends ActiveActor {
 	}
 
 	isFalling() {
-		return super.isFalling() && !(control.worldActive[this.x][this.y + 1] instanceof Robot);
+		return super.isFalling() && !(control.worldActive[this.x][this.y + 1] instanceof Robot)
+			&& !((ax, ay) => {
+				for (let i = 0; i < control.broken.length; i++) {
+					const element = control.broken[i][1];
+					if (ax == element.x && ay == element.y) {
+						return true;
+					}
+				}
+				return false;
+			})(this.x, this.y);
 	}
 
 	moveTowardsHero() {
