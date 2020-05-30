@@ -316,22 +316,29 @@ class Robot extends ActiveActor {
 		return moves;
 	}
 
+	isInBrokenByPlayer(x, y) {
+		for (let i = 0; i < control.broken.length; i++) {
+			const element = control.broken[i][1];
+			if (x == element.x && y == element.y) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	isFalling() {
 		return super.isFalling() && !(control.worldActive[this.x][this.y + 1] instanceof Robot)
-			&& !((ax, ay) => {
-				for (let i = 0; i < control.broken.length; i++) {
-					const element = control.broken[i][1];
-					if (ax == element.x && ay == element.y) {
-						return true;
-					}
-				}
-				return false;
-			})(this.x, this.y);
+			&& !this.isInBrokenByPlayer(this.x, this.y);
 	}
 
 	moveTowardsHero() {
 		if (this.isFalling()) {
 			this.y++;
+			if (this.isInBrokenByPlayer(this.x, this.y)) {
+				control.world[this.x][this.y - 1] = new Gold(this.x, this.y - 1);
+				control.world[this.x][this.y - 1].show();
+				this.collectedGold = 0;
+			}
 
 		} else {
 			let moves = this.getMovesList();
@@ -483,6 +490,8 @@ class GameControl {
 				control.world[block.x][block.y] = block;
 				control.worldActive[block.x][block.y] = empty;
 				block.show();
+				control.broken.shift();
+				i--;
 			}
 		}
 	}
