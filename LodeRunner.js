@@ -468,7 +468,7 @@ class GameControl {
 	}
 	animationEvent() {
 		control.time++;
-		for (let x = 0; x < WORLD_WIDTH; x++)
+		for (let x = 0; x < WORLD_WIDTH; x++) {
 			for (let y = 0; y < WORLD_HEIGHT; y++) {
 				let a = control.worldActive[x][y];
 				if (a.time < control.time) {
@@ -476,6 +476,15 @@ class GameControl {
 					a.animation();
 				}
 			}
+		}
+		for (let i = 0; i < control.broken.length; i++) {
+			const [regenTime, block] = control.broken[i];
+			if (control.time >= regenTime) {
+				control.world[block.x][block.y] = block;
+				control.worldActive[block.x][block.y] = empty;
+				block.show();
+			}
+		}
 	}
 	keyDownEvent(k) {
 		control.key = k.keyCode;
