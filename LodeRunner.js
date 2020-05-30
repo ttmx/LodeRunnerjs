@@ -385,7 +385,9 @@ class Robot extends ActiveActor {
 		let difficulty = 3;
 		if (this.time % difficulty == 0) {
 			this.hide();
-			this.moveTowardsHero();
+			if (!this.isInBrokenByPlayer(this.x, this.y)) {
+				this.moveTowardsHero();
+			}
 			if (this.goldDropAt != null && this.time >= this.goldDropAt) {
 				this.attemptDropGold();
 			}
