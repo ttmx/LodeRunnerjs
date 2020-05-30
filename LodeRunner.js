@@ -281,6 +281,8 @@ class Robot extends ActiveActor {
 		this.dy = 0;
 		this.goldDropAt = null;
 		this.nextGoldPickup = 0;
+		this.escapeHoleTime = null;
+		this.nextFallIntoHole = 0;
 	}
 
 	pickUpGold() {
@@ -328,7 +330,7 @@ class Robot extends ActiveActor {
 
 	isFalling() {
 		return super.isFalling() && !(control.worldActive[this.x][this.y + 1] instanceof Robot)
-			&& !this.isInBrokenByPlayer(this.x, this.y);
+			&& (!this.isInBrokenByPlayer(this.x, this.y) && this.nextFallIntoHole < control.time);
 	}
 
 	moveTowardsHero() {
@@ -338,6 +340,7 @@ class Robot extends ActiveActor {
 				control.world[this.x][this.y - 1] = new Gold(this.x, this.y - 1);
 				control.world[this.x][this.y - 1].show();
 				this.collectedGold = 0;
+				this.escapeHoleTime = control.time + 2 * ANIMATION_EVENTS_PER_SECOND;
 			}
 
 		} else {
@@ -381,12 +384,22 @@ class Robot extends ActiveActor {
 		}
 	}
 
+	escapeHole() {
+		if (control.world[this.x][this.y - 1] instanceof Empty) {
+			this.y--;
+			this.nextFallIntoHole = control.time + 6;
+			this.escapeHoleTime = null;
+		}
+	}
+
 	animation() {
 		let difficulty = 3;
 		if (this.time % difficulty == 0) {
 			this.hide();
 			if (!this.isInBrokenByPlayer(this.x, this.y)) {
 				this.moveTowardsHero();
+			} else if (control.time >= this.escapeHoleTime) {
+				this.escapeHole();
 			}
 			if (this.goldDropAt != null && this.time >= this.goldDropAt) {
 				this.attemptDropGold();
