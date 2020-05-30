@@ -62,6 +62,14 @@ class ActiveActor extends Actor {
 	animation() {
 	}
 
+	numberedDirection() {
+		if (this.direction == "left") {
+			return -1;
+		} else {
+			return 1;
+		}
+	}
+
 	inBounds(dx, dy) {
 		return this.x + dx >= 0 && this.x + dx < WORLD_WIDTH
 			&& this.y + dy >= 0 && this.y + dy < WORLD_HEIGHT;
@@ -153,6 +161,7 @@ class Brick extends PassiveActor {
 	constructor(x, y) {
 		super(x, y, "brick");
 		this.collides = true;
+		this.breaks = true;
 	}
 }
 
@@ -207,18 +216,48 @@ class Hero extends ActiveActor {
 		super(x, y, "hero_runs_left", "left", Number.POSITIVE_INFINITY);
 	}
 
-	act(k) {
-		// if(k == ' ')
-		// 	alert("shoot");
+	breakBlock(direction) {
+		if (control.world[this.x + direction][this.y + 1].breaks
+			&& !control.world[this.x + direction][this.y].collides) {
 
+			control.broken.push(
+				[control.time + 5 * ANIMATION_EVENTS_PER_SECOND,
+				control.world[this.x + direction][this.y + 1]]);
+
+			control.world[this.x + direction][this.y + 1].hide();
+		}
+	}
+
+	recoil() {
+		let nDirection = this.numberedDirection()
+		if (!this.collides(-nDirection, 0)
+			&& (control.world[this.x - nDirection][this.y + 1].collides
+				|| control.world[this.x - nDirection][this.y + 1] instanceof Ladder)) {
+
+			this.x -= nDirection;
+		}
+	}
+
+	shoot() {
+		this.breakBlock(this.numberedDirection());
+		this.recoil();
+		this.backgroundAction();
+	}
+
+	act(k) {
 		if (this.isFalling()) {
 			this.y++;
 
 		} else if (k != null) {
 			let [dx, dy] = k;
-			super.attemptMove(dx, dy);
+			if (dy === "space") {
+				this.shoot();
+				this.imageName = `hero_shoots_${this.direction}`;
+			} else {
+				super.attemptMove(dx, dy);
+				this.imageName = `hero_${this.backgroundAction()}_${this.direction}`;
+			}
 		}
-		this.imageName = `hero_${this.backgroundAction()}_${this.direction}`;
 	}
 
 	pickUpGold() {
@@ -377,6 +416,7 @@ class GameControl {
 	}
 	loadLevel(level) {
 		this.worldGold = 0;
+		this.broken = [];
 		if (level < 1 || level > MAPS.length)
 			fatalError("Invalid level " + level)
 		this.clearLevel();
@@ -393,7 +433,7 @@ class GameControl {
 	showExit() {
 		for (let x = 0; x < WORLD_WIDTH; x++)
 			for (let y = 0; y < WORLD_HEIGHT; y++) {
-				if(this.world[x][y] instanceof Ladder)
+				if (this.world[x][y] instanceof Ladder)
 					this.world[x][y].makeVisible();
 			}
 	}
