@@ -1,5 +1,15 @@
 /*     Lode Runner
 
+Autores: Andre Palma (55415), Tiago Teles (54953)
+
+O nosso projeto tem um sistema descentralizado de classes onde cada uma
+inspeciona o estado das com quem quer interagir e toma decisoes baseadas no mesmo.
+Temos tambem um display secundario onde informacao extra é apresentada, como o tempo atual,
+o tempo minimo em que já se fez aquele nivel, e o ouro apanhado
+
+Todas as funcionalidades previstas foram implementadas
+
+
 01234567890123456789012345678901234567890123456789012345678901234567890123456789
 */
 
