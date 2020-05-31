@@ -261,6 +261,7 @@ class Hero extends ActiveActor {
 	}
 
 	pickUpGold() {
+		console.log("gold: "+this.collectedGold);
 		super.pickUpGold();
 		if (this.collectedGold >= control.worldGold)
 			control.showExit();
@@ -545,7 +546,7 @@ class GameControl {
 
 	drawWin(){
 		this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-		this.ctx.font = "30px Ubuntu";
+		this.ctx.font = "20px bitFont";
 		this.ctx.textAlign = "center";
 		let interval = 1000/60;
 		let iteration = 0;
@@ -593,7 +594,7 @@ class TimeDisplay extends Display {
 	}
 
 	draw() {
-		this.scene.ctx.font = "20px Ubuntu";
+		this.scene.ctx.font = "15px bitFont";
 		this.scene.ctx.fillStyle = "#BF616A";
 		this.scene.ctx.fillText("Time: "+ ((new Date().getTime()-control.starttime)/1000).toFixed(1) + "s" ,this.x, this.y);
 		this.scene.ctx.fillText("Lowest: "+ (control.highscores[control.currentLevel]/1000).toFixed(1) + "s" ,this.x, this.y+25);
