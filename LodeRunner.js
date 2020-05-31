@@ -426,6 +426,10 @@ class GameControl {
 		this.lastKey = null;
 		this.time = 0;
 		this.currentLevel = parseInt(localStorage.getItem('currentLevel'));
+		console.log(this.currentLevel);
+		if(isNaN(this.currentLevel))
+			this.currentLevel = 1;
+		console.log(this.currentLevel);
 		this.highscores = JSON.parse(localStorage.getItem('highscores'));
 		if(this.highscores === null)
 			this.highscores = [];
@@ -434,7 +438,7 @@ class GameControl {
 		this.ctx = document.getElementById("canvas1").getContext('2d');
 		this.world = this.createMatrix();
 		this.worldActive = this.createMatrix();
-		this.loadLevel(this.currentLevel+1);
+		this.loadLevel(this.currentLevel);
 		this.setupEvents();
 	}
 	createMatrix() { // stored by columns
@@ -459,16 +463,16 @@ class GameControl {
 	}
 	loadLevel(level) {
 		this.worldGold = 0;
-		level = (length+1)%MAPS.length;
+		level = ((level-1)%MAPS.length);
 		this.broken = [];
-		if (level < 1 || level > MAPS.length)
+		if (level < 0 || level >= MAPS.length)
 			fatalError("Invalid level " + level)
 		this.clearLevel();
 		this.starttime = new Date().getTime();
-		let map = MAPS[level - 1];  // -1 because levels start at 1
+		let map = MAPS[level];  // -1 because levels start at 1
 
-		localStorage.setItem('currentLevel',level-1);
-		this.currentLevel = level;
+		localStorage.setItem('currentLevel',level+1);
+		this.currentLevel = level+1;
 
 		for (let x = 0; x < WORLD_WIDTH; x++)
 			for (let y = 0; y < WORLD_HEIGHT; y++) {
@@ -541,7 +545,7 @@ class GameControl {
 		let highscores = JSON.parse(localStorage.getItem('highscores'));
 		if(highscores === null)
 			highscores = [];
-		if(highscores[this.currentLevel]>timeSpan || highscores[this.currentLevel] == null)
+		if(highscores[this.currentLevel]>timeSpan || isNaN(highscores[this.currentLevel]))
 			highscores[this.currentLevel] = timeSpan;
 		localStorage.setItem('highscores',JSON.stringify(highscores));
 	}
@@ -600,6 +604,7 @@ class TimeDisplay extends Display {
 		this.scene.ctx.fillStyle = "#BF616A";
 		this.scene.ctx.fillText("Time: "+ ((new Date().getTime()-control.starttime)/1000).toFixed(1) + "s" ,this.x, this.y);
 		this.scene.ctx.fillText("Lowest: "+ (control.highscores[control.currentLevel]/1000).toFixed(1) + "s" ,this.x, this.y+25);
+		this.scene.ctx.fillText("Gold: "+ hero.collectedGold+"/"+control.worldGold ,this.x, this.y+50);
 	}
 
 }
@@ -736,6 +741,7 @@ class ControlDisplay {
 			button.value = 'Map ' + (id + 1);
 			button.type = 'button';
 			button.addEventListener('click', () => {
+				document.getElementById("canvas1").focus();
 
 				control.loadLevel(id + 1);
 
