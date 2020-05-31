@@ -448,6 +448,7 @@ class Robot extends ActiveActor {
 			if (this.isInHole()) {
 				this.escapeHoleTime = this.time + 2 * ANIMATION_EVENTS_PER_SECOND;
 				if (this.collectedGold > 0) {
+
 					this.placeGoldAt(this.x, this.y - 1 /*TODO Bug Prone*/);
 				}
 			}
@@ -497,8 +498,7 @@ class Robot extends ActiveActor {
 	}
 
 	escapeHole() {
-		if (control.world[this.x][this.y - 1].isFullyUncollidable()
-			&& control.worldActive[this.x][this.y - 1].isEmpty) {
+		if (!control.world[this.x][this.y - 1].collidesWithAny([SOUTH])) {
 
 			this.y--;
 			this.nextFallIntoHole = control.time + 6;
