@@ -347,16 +347,16 @@ class Hero extends ActiveActor {
 			if (dy === "space") {
 				this.shoot();
 				this.imageName = `hero_shoots_${this.direction}`;
-			} else {
-				if (!this.invalidMove([dx, dy])
-					&& this.inBounds(dx, dy)
+				return;
+			} else if (!this.invalidMove([dx, dy])) {
+				if (this.inBounds(dx, dy)
 					&& !(control.worldActive[this.x + dx][this.y + dy] instanceof Robot)) {
 
 					this.attemptMove(dx, dy);
 				}
-				this.imageName = `hero_${this.backgroundAction()}_${this.direction}`;
 			}
 		}
+		this.imageName = `hero_${this.backgroundAction()}_${this.direction}`;
 	}
 
 	pickUpGold() {
