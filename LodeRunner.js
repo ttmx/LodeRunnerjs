@@ -447,8 +447,23 @@ class Robot extends ActiveActor {
 			if (this.isInHole()) {
 				this.escapeHoleTime = this.time + 2 * ANIMATION_EVENTS_PER_SECOND;
 				if (this.collectedGold > 0) {
+					let findGoldSpot = ((x, y) => {
+						if (this.getBlockIn(NORTH).isEmpty) {
+							return [x, y - 1];
+						} else {
+							for (let newX = 0; newX < WORLD_WIDTH; newX++) {
+								for (let newY = 0; newY < WORLD_HEIGHT; newY++) {
+									if (control.world[newX][newY].isEmpty && control.world[newX][newY + 1].isFullyCollidable()) {
+										return [newX, newY];
+									}
+								}
+							}
+							return null;
+						}
+					})
 
-					this.placeGoldAt(this.x, this.y - 1 /*TODO Bug Prone*/);
+					let coordinates = findGoldSpot(this.x, this.y);
+					this.placeGoldAt(coordinates[0], coordinates[1]);
 				}
 			}
 		} else {
