@@ -7,71 +7,79 @@ Lode Runner!!! html
 
 Autores: Andre Palma (55415), Tiago Teles (54953)
 
-O ficheiro "LodeRunner.js" tem de incluir, logo nas primeiras linhas, um coment�rio
-inicial contendo: o nome e n�mero dos dois alunos que realizaram o projeto;
-indica��o de quais as partes do trabalho que foram feitas e das que n�o foram
-feitas (para facilitar uma corre��o sem enganos); ainda possivelmente alertando
-para alguns aspetos da implementa��o que possam ser menos �bvios para o avaliador.
+O nosso projeto tem um sistema descentralizado de classes onde cada uma
+inspeciona o estado das com quem quer interagir e toma decisoes baseadas no mesmo.
+Temos tambem um display secundario onde informacao extra é apresentada, como o tempo atual,
+o tempo minimo em que já se fez aquele nivel, e o ouro apanhado
+
+Todas as funcionalidades previstas foram implementadas
 
 01234567890123456789012345678901234567890123456789012345678901234567890123456789
 -->
 
 <head>
-<title>Linguagens e Ambientes de Programa��o (2019/2020) [Eng.Inf. - DI/FCT/UNL] - 3� projeto pr�tico (Javascript)</title>
+    <title>Linguagens e Ambientes de Programa��o (2019/2020) [Eng.Inf. - DI/FCT/UNL] -
+        3� projeto pr�tico (Javascript)
+    </title>
 
-<script type="text/javascript" src="LodeRunner0.js"></script>
-<script type="text/javascript" src="LodeRunner.js"></script>
-<style>
-body{
-    background-color:#3b4252;
-}
-input {
-    display: inline-block;
-    color: rgb(216, 222, 233);
-    border-radius: 0.25em;
-    border: solid 1px rgb(76, 86, 106);
-    background-color: transparent;
-    text-align: center;
-    cursor: pointer;
-    margin: 5px;
-    height: 30;
+    <script type="text/javascript" src="LodeRunner0.js"></script>
+    <script type="text/javascript" src="LodeRunner.js"></script>
+    <style>
+        body {
+            background-color: #3b4252;
+        }
 
-    transition: border-color 200ms ease-in 0s, color 200ms ease-in 0s;
-}
-input:hover {
-    color: rgb(121, 184, 202);
-    border-radius: 0.25em;
-    border: solid 1px rgb(121, 184, 202);
-}
-p {
-    color: rgb(216, 222, 233);
-}
+        input {
+            display: inline-block;
+            color: rgb(216, 222, 233);
+            border-radius: 0.25em;
+            border: solid 1px rgb(76, 86, 106);
+            background-color: transparent;
+            text-align: center;
+            cursor: pointer;
+            margin: 5px;
+            height: 30;
+
+            transition: border-color 200ms ease-in 0s, color 200ms ease-in 0s;
+        }
+
+        input:hover {
+            color: rgb(121, 184, 202);
+            border-radius: 0.25em;
+            border: solid 1px rgb(121, 184, 202);
+        }
+
+        p {
+            color: rgb(216, 222, 233);
+        }
+
 @font-face {
-   font-family: bitFont;
-   src: url(https://fonts.gstatic.com/s/pressstart2p/v8/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2);
+    font-family: bitFont;
+    src: url(https://fonts.gstatic.com/s/pressstart2p/v8/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2);
 }
 
 @font-face {
-   font-family: bitFont;
-   src: url(https://fonts.gstatic.com/s/pressstart2p/v8/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2);
-   font-weight: bold;
+    font-family: bitFont;
+    src: url(https://fonts.gstatic.com/s/pressstart2p/v8/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2);
+    font-weight: bold;
 }
 
-* {
-   font-family: bitFont;
-}
-</style>
+        * {
+            font-family: bitFont;
+        }
+    </style>
 
 </head>
 
 
-<body onload="onLoad()" >
+<body onload="onLoad()">
     <p><b>LodeRunner</b> -- Andre Palma (55415), Tiago Teles (54953)</p>
-<form NAME="form1">
-	<canvas id="canvas1" width="504" height="272" style="border:1px solid #81a1c1;" tabindex="1">
-		Your browser doesn't support the html5 canvas tag.
-	</canvas>
-</form>
+    <form NAME="form1">
+        <canvas id="canvas1" width="504" height="272" style="border:1px solid #81a1c1;"
+        tabindex="1">
+            Your browser doesn't support the html5 canvas tag.
+        </canvas>
+    </form>
 </body>
 
 </html>

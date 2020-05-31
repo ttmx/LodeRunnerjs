@@ -1,5 +1,15 @@
 /*     Lode Runner
 
+Autores: Andre Palma (55415), Tiago Teles (54953)
+
+O nosso projeto tem um sistema descentralizado de classes onde cada uma
+inspeciona o estado das com quem quer interagir e toma decisoes baseadas no mesmo.
+Temos tambem um display secundario onde informacao extra é apresentada, como o tempo atual,
+o tempo minimo em que já se fez aquele nivel, e o ouro apanhado
+
+Todas as funcionalidades previstas foram implementadas
+
+
 01234567890123456789012345678901234567890123456789012345678901234567890123456789
 */
 
@@ -338,7 +348,8 @@ class Hero extends ActiveActor {
 
 	isFalling() {
 		return super.isFalling()
-			&& !(this.getBlockIn(SOUTH).isHole() && (control.worldActive[this.x][this.y + 1].isRobot));
+			&& !(this.getBlockIn(SOUTH).isHole()
+				&& (control.worldActive[this.x][this.y + 1].isRobot));
 	}
 
 	act(k) {
@@ -453,7 +464,8 @@ class Robot extends ActiveActor {
 						} else {
 							for (let newX = 0; newX < WORLD_WIDTH; newX++) {
 								for (let newY = 0; newY < WORLD_HEIGHT; newY++) {
-									if (control.world[newX][newY].isEmpty && control.world[newX][newY + 1].isFullyCollidable()) {
+									if (control.world[newX][newY].isEmpty
+										&& control.world[newX][newY + 1].isFullyCollidable()) {
 										return [newX, newY];
 									}
 								}
@@ -491,7 +503,8 @@ class Robot extends ActiveActor {
 	}
 
 	dropGoldAt(dx) {
-		if (control.world[this.x + dx][this.y + 1].isFullyCollidable() && control.world[this.x + dx][this.y].isEmpty
+		if (control.world[this.x + dx][this.y + 1].isFullyCollidable()
+			&& control.world[this.x + dx][this.y].isEmpty
 			&& control.worldActive[this.x + dx][this.y].isEmpty) {
 
 			this.placeGoldAt(this.x + dx, this.y);
@@ -570,7 +583,10 @@ class GameControl {
 		this.holesDuration = 5 * ANIMATION_EVENTS_PER_SECOND;
 		this.worldGold = 0;
 		this.holes = [];
-		this.winCondition = (() => { return control.worldGold == hero.collectedGold && hero.y == 0 });
+		this.winCondition = (() => {
+			return control.worldGold == hero.collectedGold
+				&& hero.y == 0
+		});
 		this.world = this.createMatrix();
 		this.worldActive = this.createMatrix();
 	}
@@ -769,9 +785,13 @@ class TimeDisplay extends Display {
 	draw() {
 		this.scene.ctx.font = "15px bitFont";
 		this.scene.ctx.fillStyle = "#BF616A";
-		this.scene.ctx.fillText("Time: " + ((new Date().getTime() - control.starttime) / 1000).toFixed(1) + "s", this.x, this.y);
-		this.scene.ctx.fillText("Lowest: " + (control.highscores[control.currentLevel] / 1000).toFixed(1) + "s", this.x, this.y + 25);
-		this.scene.ctx.fillText("Gold: " + hero.collectedGold + "/" + control.worldGold, this.x, this.y + 50);
+		this.scene.ctx.fillText("Time: " +
+			((new Date().getTime() - control.starttime) / 1000).toFixed(1) + "s", this.x, this.y);
+		this.scene.ctx.fillText("Lowest: " +
+			(control.highscores[control.currentLevel] / 1000).toFixed(1) +
+			"s", this.x, this.y + 25);
+		this.scene.ctx.fillText("Gold: " +
+			hero.collectedGold + "/" + control.worldGold, this.x, this.y + 50);
 	}
 
 }
