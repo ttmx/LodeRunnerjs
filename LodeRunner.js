@@ -12,9 +12,19 @@ let empty, hero, control;
 
 // ACTORS
 
+const NORTH = 0;
+const SOUTH = 1;
+const EAST = 2;
+const WEST = 3;
+const moves = [
+	[0, -1],
+	[0, 1],
+	[-1, 0],
+	[1, 0]
+]
+
 class Actor {
 	constructor(x, y, imageName) {
-
 		this.x = x;
 		this.y = y;
 		this.imageName = imageName;
@@ -33,6 +43,41 @@ class Actor {
 }
 
 class PassiveActor extends Actor {
+
+	constructor(x, y, imageName, collisions) {
+		super(x, y, imageName);
+		this.collisions = collisions;
+	}
+
+	collidesWithAny(directions) {
+		for (let i = 0; i < directions.length; i++) {
+			if (this.collisions[directions[i]]) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	isFullyCollidable() {
+		return this.collisions.every(collision => { return collision })
+	}
+
+	isFullyUncollidable() {
+		return this.collisions.every(collision => { return !collision })
+	}
+
+	static fullyUncollidable() {
+		return [false, false, false, false];
+	}
+
+	static fullyCollidable() {
+		return [true, true, true, true];
+	}
+
+	isHole() {
+		return false;
+	}
+
 	show() {
 		control.world[this.x][this.y] = this;
 		this.draw(this.x, this.y);
@@ -70,19 +115,18 @@ class ActiveActor extends Actor {
 		}
 	}
 
-	inBounds(dx, dy) {
-		return this.x + dx >= 0 && this.x + dx < WORLD_WIDTH
-			&& this.y + dy >= 0 && this.y + dy < WORLD_HEIGHT;
+	getBlockIn(direction) {
+		let [dx, dy] = moves[direction];
+		return control.world[this.x + dx][this.y + dy];
 	}
 
-	collides(dx, dy) {
-		return !this.inBounds(dx, dy)
-			|| control.world[this.x + dx][this.y + dy].collides;
+	inBounds(dx, dy) {
+		return control.inWorldBounds(this.x + dx, this.y + dy);
 	}
 
 	isStanding() {
-		return this.collides(0, 1)
-			|| (!this.isClimbing() && control.world[this.x][this.y + 1].climbable);
+		return !this.inBounds(0, 1)
+			|| this.getBlockIn(SOUTH).collidesWithAny([NORTH]);
 	}
 
 	isHanging() {
@@ -138,59 +182,107 @@ class ActiveActor extends Actor {
 		}
 	}
 
-	attemptMove(dx, dy) {
-		if (!this.collides(dx, dy)) {
-			if (dx != 0) {
-				this.x += dx;
-				this.direction = ['left', this.direction, 'right'][dx + 1];
-				return true;
-			}
-			if (this.isClimbing()
-				|| (dy === 1
-					&& (this.isHanging() || this.isStanding()))) {
+	invalidMove(move) {
+		return !moves.some((elem) => {
+			return elem[0] == move[0]
+				&& elem[1] == move[1]
+		});
+	}
 
-				this.y += dy;
-				return true;
+	moveNorth() {
+		if (this.isClimbing() && !this.getBlockIn(NORTH).collidesWithAny([SOUTH])) {
+			this.y--;
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	moveSouth() {
+		let blockBelow = this.getBlockIn(SOUTH);
+		if (!blockBelow.collidesWithAny([NORTH]) || blockBelow.climbable) {
+			this.y++;
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	verticalMove(dy) {
+		if (dy == -1) {
+			return this.moveNorth();
+		} else {
+			return this.moveSouth();
+		}
+	}
+
+	horizontalMove(dx) {
+		let move = [EAST, null, WEST];
+		if (!this.getBlockIn(move[dx + 1]).collidesWithAny([move[-dx + 1]])) {
+			this.x += dx;
+			this.direction = ['left', this.direction, 'right'][dx + 1];
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	attemptMove(dx, dy) {
+		if (!this.invalidMove([dx, dy]) && this.inBounds(dx, dy)) {
+			if (dx == 0) {
+				return this.verticalMove(dy);
+			} else {
+				return this.horizontalMove(dx);
 			}
 		}
-		return false;
 	}
 }
 
 class Brick extends PassiveActor {
 	constructor(x, y) {
-		super(x, y, "brick");
-		this.collides = true;
+		super(x, y, "brick", PassiveActor.fullyCollidable());
 		this.breaks = true;
 	}
 }
 
 class Chimney extends PassiveActor {
-	constructor(x, y) { super(x, y, "chimney"); }
+	constructor(x, y) { super(x, y, "chimney", PassiveActor.fullyUncollidable()); }
 }
 
 class Empty extends PassiveActor {
-	constructor() { super(-1, -1, "empty"); }
+	constructor() { super(-1, -1, "empty", PassiveActor.fullyUncollidable()); }
 	show() { }
 	hide() { }
 }
 
 class Gold extends PassiveActor {
-	constructor(x, y) { super(x, y, "gold"); }
+	constructor(x, y) { super(x, y, "gold", PassiveActor.fullyUncollidable()); }
 }
 
 class Invalid extends PassiveActor {
-	constructor(x, y) { super(x, y, "invalid"); }
+	constructor(x, y) { super(x, y, "invalid", PassiveActor.fullyUncollidable()); }
+}
+
+class Hole extends PassiveActor {
+	constructor(x, y, holesDuration) {
+		super(x, y, "empty", PassiveActor.fullyUncollidable());
+		this.holeDuration = holesDuration;
+	}
+
+	isHole() {
+		return true;
+	}
 }
 
 class Ladder extends PassiveActor {
 	constructor(x, y) {
-		super(x, y, "empty");
+		super(x, y, "empty", PassiveActor.fullyUncollidable());
 		this.climbable = false;
 	}
 
 	makeVisible() {
 		this.imageName = "ladder";
+		this.collisions[NORTH] = true;
 		this.climbable = true;
 		this.show();
 	}
@@ -198,16 +290,14 @@ class Ladder extends PassiveActor {
 
 class Rope extends PassiveActor {
 	constructor(x, y) {
-		super(x, y, "rope");
+		super(x, y, "rope", PassiveActor.fullyUncollidable());
 		this.hang = true;
 	}
 }
 
 class Stone extends PassiveActor {
 	constructor(x, y) {
-		super(x, y, "stone");
-		this.collides = true;
-
+		super(x, y, "stone", PassiveActor.fullyCollidable());
 	}
 }
 
@@ -216,38 +306,44 @@ class Hero extends ActiveActor {
 		super(x, y, "hero_runs_left", "left", Number.POSITIVE_INFINITY);
 	}
 
-	breakBlock(direction) {
-		if (control.world[this.x + direction][this.y + 1].breaks
-			&& !control.world[this.x + direction][this.y].collides) {
+	aimedBlock() {
+		return control.world[this.x + this.numberedDirection()][this.y + 1];
+	}
 
-			control.broken.push(
-				[control.time + 5 * ANIMATION_EVENTS_PER_SECOND,
-				control.world[this.x + direction][this.y + 1]]);
+	breakBlock() {
+		if (this.aimedBlock().breaks
+			&& !control.world[this.x + this.numberedDirection()][this.y].isFullyCollidable()) {
 
-			control.world[this.x + direction][this.y + 1].hide();
+			control.placeHole(this.x + this.numberedDirection(), this.y + 1);
 		}
 	}
 
 	recoil() {
-		let nDirection = this.numberedDirection()
-		if (!this.collides(-nDirection, 0)
-			&& (control.world[this.x - nDirection][this.y + 1].collides
-				|| control.world[this.x - nDirection][this.y + 1] instanceof Ladder)) {
+		let nDirection = this.numberedDirection();
+		let move = [EAST, null, WEST];
+		if (this.inBounds(-nDirection, 0)
+			&& !this.getBlockIn(move[nDirection + 1]).collidesWithAny([move[-nDirection + 1]])
+			&& control.world[this.x - nDirection][this.y + 1].collidesWithAny([NORTH])) {
 
 			this.x -= nDirection;
 		}
 	}
 
 	shoot() {
-		this.breakBlock(this.numberedDirection());
+		this.breakBlock();
 		this.recoil();
 		this.backgroundAction();
+	}
+
+	isFalling() {
+		return super.isFalling()
+			&& !(this.getBlockIn(SOUTH).isHole() && (control.worldActive[this.x][this.y + 1] instanceof Robot));
 	}
 
 	act(k) {
 		if (this.isFalling()) {
 			this.y++;
-
+			this.backgroundAction();
 		} else if (k != null) {
 			let [dx, dy] = k;
 			if (dy === "space") {
@@ -261,7 +357,7 @@ class Hero extends ActiveActor {
 	}
 
 	pickUpGold() {
-		console.log("gold: "+this.collectedGold);
+		console.log("gold: " + this.collectedGold);
 		super.pickUpGold();
 		if (this.collectedGold >= control.worldGold)
 			control.showExit();
@@ -272,13 +368,6 @@ class Hero extends ActiveActor {
 		control.lastKey = control.getKey();
 		this.act(control.lastKey);
 		this.show();
-	}
-	attemptMove(dx, dy) {
-		if(this.collectedGold >= control.worldGold && this.y+dy<=-1){
-			control.winLevel();
-		}else{
-			super.attemptMove(dx, dy);
-		}
 	}
 }
 
@@ -301,56 +390,58 @@ class Robot extends ActiveActor {
 	}
 
 	getMovesList() {
-		let moves = [
-			[[-1, 0], null],
-			[[0, -1], null],
-			[[1, 0], null],
-			[[0, 1], null]
+		let movements = [
+			[moves[NORTH], null],
+			[moves[SOUTH], null],
+			[moves[EAST], null],
+			[moves[WEST], null]
 		];
 
-		for (let i = 0; i < moves.length; i++) {
-			const [dx, dy] = moves[i][0];
-			moves[i][1] = Math.hypot(this.x - hero.x + dx, this.y - hero.y + dy);
+		for (let i = 0; i < movements.length; i++) {
+			const [dx, dy] = movements[i][0];
+			movements[i][1] = Math.hypot(this.x - hero.x + dx, this.y - hero.y + dy);
 		}
-		moves.push([null, Math.hypot(this.x - hero.x, this.y - hero.y)]);
-		moves.sort((a, b) => a[1] - b[1]);
+		movements.push([null, Math.hypot(this.x - hero.x, this.y - hero.y)]);
+		movements.sort((a, b) => a[1] - b[1]);
 
-		moves = (moves => {
-			let a = [];
-			moves.forEach(move => {
-				a.push(move[0]);
-			});
-			return a;
-		})(moves);
+		let finalMoves = [];
+		movements.forEach(movements => {
+			finalMoves.push(movements[0]);
+		});
 
-		return moves;
+		return finalMoves;
 	}
 
-	isInBrokenByPlayer(x, y) {
-		for (let i = 0; i < control.broken.length; i++) {
-			const element = control.broken[i][1];
-			if (x == element.x && y == element.y) {
+	isInHole() {
+		return control.world[this.x][this.y].isHole();
+	}
+
+	isFalling() {
+
+		if (super.isFalling()
+			&& !(control.worldActive[this.x][this.y + 1] instanceof Robot)
+			&& !this.isInHole()) {
+
+			if (this.getBlockIn(SOUTH).isHole()) {
+				if (this.nextFallIntoHole <= this.time) {
+					return true;
+				}
+			} else {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	isFalling() {
-		return super.isFalling() && !(control.worldActive[this.x][this.y + 1] instanceof Robot)
-			&& (!this.isInBrokenByPlayer(this.x, this.y) && this.nextFallIntoHole < control.time);
-	}
-
 	moveTowardsHero() {
 		if (this.isFalling()) {
 			this.y++;
-			if (this.isInBrokenByPlayer(this.x, this.y)) {
-				control.world[this.x][this.y - 1] = new Gold(this.x, this.y - 1);
-				control.world[this.x][this.y - 1].show();
-				this.collectedGold = 0;
-				this.escapeHoleTime = control.time + 2 * ANIMATION_EVENTS_PER_SECOND;
+			if (this.isInHole()) {
+				this.escapeHoleTime = this.time + 2 * ANIMATION_EVENTS_PER_SECOND;
+				if (this.collectedGold > 0) {
+					this.placeGoldAt(this.x, this.y - 1 /*TODO Bug Prone*/);
+				}
 			}
-
 		} else {
 			let moves = this.getMovesList();
 			if (moves != null) {
@@ -366,34 +457,38 @@ class Robot extends ActiveActor {
 		this.imageName = `robot_${this.backgroundAction()}_${this.direction}`;
 	}
 
+	placeGoldAt(x, y) {
+		control.placeGold(x, y);
+		this.collectedGold = 0;
+		this.goldDropAt = null;
+		this.nextGoldPickup = this.time + 2 * ANIMATION_EVENTS_PER_SECOND;
+	}
+
 	dropGoldAt(dx) {
-		if (control.world[this.x + dx][this.y + 1].collides && control.world[this.x + dx][this.y] instanceof Empty
+		if (control.world[this.x + dx][this.y + 1].isFullyCollidable() && control.world[this.x + dx][this.y] instanceof Empty
 			&& control.worldActive[this.x + dx][this.y] instanceof Empty) {
 
-			control.world[this.x + dx][this.y] = new Gold(this.x + dx, this.y);
-			control.world[this.x + dx][this.y].show();
-			this.collectedGold = 0;
-			this.goldDropAt = null;
-			this.nextGoldPickup = this.time + 2 * ANIMATION_EVENTS_PER_SECOND;
+			this.placeGoldAt(this.x + dx, this.y);
+			return true;
 		}
+		return false;
 	}
 
 	attemptDropGold() {
-		let drop = (direction => {
-			this.dropGoldAt(direction);
-			if (this.goldDropAt != null) {
-				this.dropGoldAt(-direction);
-			}
-		})
-		if (this.direction == "left") {
-			drop(1);
-		} else {
-			drop(-1);
+		if (this.goldDropAt != null && this.time >= this.goldDropAt) {
+			let drop = (direction => {
+				if (!this.dropGoldAt(direction)) {
+					this.dropGoldAt(-direction);
+				}
+			})
+			drop(this.numberedDirection());
 		}
 	}
 
 	escapeHole() {
-		if (control.world[this.x][this.y - 1] instanceof Empty) {
+		if (control.world[this.x][this.y - 1].isFullyUncollidable()
+			&& control.worldActive[this.x][this.y - 1] instanceof Empty) {
+
 			this.y--;
 			this.nextFallIntoHole = control.time + 6;
 			this.escapeHoleTime = null;
@@ -401,17 +496,14 @@ class Robot extends ActiveActor {
 	}
 
 	animation() {
-		let difficulty = 3;
-		if (this.time % difficulty == 0) {
+		if (this.time % control.difficulty == 0) {
 			this.hide();
-			if (!this.isInBrokenByPlayer(this.x, this.y)) {
+			if (!this.isInHole()) {
 				this.moveTowardsHero();
 			} else if (control.time >= this.escapeHoleTime) {
 				this.escapeHole();
 			}
-			if (this.goldDropAt != null && this.time >= this.goldDropAt) {
-				this.attemptDropGold();
-			}
+			this.attemptDropGold();
 			this.show();
 		}
 	}
@@ -422,23 +514,18 @@ class Robot extends ActiveActor {
 class GameControl {
 	constructor() {
 		control = this;
-		this.key = 0;
-		this.lastKey = null;
-		this.time = 0;
+		this.defaultGameLogic();
 		this.currentLevel = parseInt(localStorage.getItem('currentLevel'));
 		console.log(this.currentLevel);
 		if(isNaN(this.currentLevel))
 			this.currentLevel = 1;
 		console.log(this.currentLevel);
 		this.highscores = JSON.parse(localStorage.getItem('highscores'));
-		if(this.highscores === null)
+		if (this.highscores === null)
 			this.highscores = [];
-		this.worldGold = 0;
 		empty = new Empty();	// only one empty actor needed
 		this.ctx = document.getElementById("canvas1").getContext('2d');
-		this.world = this.createMatrix();
-		this.worldActive = this.createMatrix();
-		this.loadLevel(this.currentLevel);
+		this.loadLevel(this.currentLevel + 1);
 		this.setupEvents();
 	}
 	createMatrix() { // stored by columns
@@ -451,10 +538,36 @@ class GameControl {
 		}
 		return matrix;
 	}
-	clearLevel() {
 
+	defaultGameLogic() {
+		this.key = 0;
+		this.lastKey = null;
+		this.time = 0;
+		this.difficulty = 3;
+		this.holesDuration = 5 * ANIMATION_EVENTS_PER_SECOND;
+		this.worldGold = 0;
+		this.holes = [];
+		this.winCondition = (() => { return control.worldGold == hero.collectedGold && hero.y == 0 });
 		this.world = this.createMatrix();
 		this.worldActive = this.createMatrix();
+	}
+
+	placeGold(x, y) {
+		control.world[x][y] = new Gold(x, y);
+		control.world[x][y].show();
+	}
+
+	placeHole(x, y) {
+		control.holes.push(
+			[control.time + 5 * ANIMATION_EVENTS_PER_SECOND,
+			control.world[x][y]]);
+
+		control.world[x][y] = new Hole(x, y);
+	}
+
+	clearLevel() {
+
+		this.defaultGameLogic();
 		this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 		this.ctx.rect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 		this.ctx.fillStyle = "#fff";
@@ -469,18 +582,18 @@ class GameControl {
 			fatalError("Invalid level " + level)
 		this.clearLevel();
 		this.starttime = new Date().getTime();
-		let map = MAPS[level];  // -1 because levels start at 1
-
-		localStorage.setItem('currentLevel',level+1);
 		this.currentLevel = level+1;
-
-		for (let x = 0; x < WORLD_WIDTH; x++)
+		localStorage.setItem('currentLevel',level+1);
+		let map = MAPS[level];  // -1 because levels start at 1
+		for (let x = 0; x < WORLD_WIDTH; x++) {
 			for (let y = 0; y < WORLD_HEIGHT; y++) {
 				// x/y reversed because map stored by lines
 				GameFactory.actorFromCode(map[y][x], x, y);
-				this.worldGold += this.world[x][y] instanceof Gold;
+				if (this.world[x][y] instanceof Gold) {
+					this.worldGold++;
+				}
 			}
-
+		}
 	}
 
 	showExit() {
@@ -510,26 +623,37 @@ class GameControl {
 		addEventListener("keyup", this.keyUpEvent, false);
 		setInterval(this.animationEvent, 1000 / ANIMATION_EVENTS_PER_SECOND);
 	}
-	animationEvent() {
-		control.time++;
+
+	updateActiveActorAnimations() {
 		for (let x = 0; x < WORLD_WIDTH; x++) {
 			for (let y = 0; y < WORLD_HEIGHT; y++) {
-				let a = control.worldActive[x][y];
-				if (a.time < control.time) {
-					a.time = control.time;
-					a.animation();
+				let activeActor = this.worldActive[x][y];
+				if (activeActor.time < this.time) {
+					activeActor.time = this.time;
+					activeActor.animation();
 				}
 			}
 		}
-		for (let i = 0; i < control.broken.length; i++) {
-			const [regenTime, block] = control.broken[i];
-			if (control.time >= regenTime) {
-				control.world[block.x][block.y] = block;
-				control.worldActive[block.x][block.y] = empty;
+	}
+
+	updateHoles() {
+		for (let i = 0; i < this.holes.length; i++) {
+			const [regenTime, block] = this.holes[i];
+			if (this.time >= regenTime) {
+				this.world[block.x][block.y] = block;
+				this.worldActive[block.x][block.y] = empty;
 				block.show();
-				control.broken.shift();
+				this.holes.shift();
 				i--;
 			}
+		}
+	}
+	animationEvent() {
+		control.time++;
+		control.updateActiveActorAnimations();
+		control.updateHoles();
+		if (control.winCondition()) {
+			control.winLevel();
 		}
 	}
 	keyDownEvent(k) {
@@ -538,42 +662,46 @@ class GameControl {
 	keyUpEvent(k) {
 	}
 
+	inWorldBounds(x, y) {
+		return x >= 0 && x < WORLD_WIDTH
+			&& y >= 0 && y < WORLD_HEIGHT;
+	}
 
-	storeHighscore(){
+	storeHighscore() {
 
 		let timeSpan = new Date().getTime() - this.starttime;
 		let highscores = JSON.parse(localStorage.getItem('highscores'));
-		if(highscores === null)
+		if (highscores === null)
 			highscores = [];
 		if(highscores[this.currentLevel]>timeSpan || isNaN(highscores[this.currentLevel]))
 			highscores[this.currentLevel] = timeSpan;
-		localStorage.setItem('highscores',JSON.stringify(highscores));
+		localStorage.setItem('highscores', JSON.stringify(highscores));
 	}
 
-	drawWin(){
+	drawWin() {
 		this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 		this.ctx.font = "20px bitFont";
 		this.ctx.textAlign = "center";
-		let interval = 1000/60;
+		let interval = 1000 / 60;
 		let iteration = 0;
-		let animator = setInterval(()=>{
+		let animator = setInterval(() => {
 			iteration++;
 			this.ctx.fillStyle = "#81A1C1"
-			this.ctx.fillRect(0,0,iteration*(interval/5000)*this.ctx.canvas.width,this.ctx.canvas.height);
+			this.ctx.fillRect(0, 0, iteration * (interval / 5000) * this.ctx.canvas.width, this.ctx.canvas.height);
 			this.ctx.fillStyle = "#4C566A";
-			this.ctx.fillRect(100,100,300,50);
+			this.ctx.fillRect(100, 100, 300, 50);
 			this.ctx.fillStyle = "#81A1C1"
-			this.ctx.fillText("Level Completed",this.ctx.canvas.width/2, this.ctx.canvas.height/2);
-			if(iteration>= 5000/interval)
+			this.ctx.fillText("Level Completed", this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
+			if (iteration >= 5000 / interval)
 				clearInterval(animator);
-		},interval);
+		}, interval);
 	}
 
-	winLevel(){
+	winLevel() {
 		this.clearLevel();
 		this.storeHighscore();
 		this.drawWin();
-		setTimeout(()=>{this.loadLevel(this.currentLevel+1)},6000);
+		setTimeout(() => { this.loadLevel(this.currentLevel + 1) }, 6000);
 
 	}
 }
@@ -823,7 +951,7 @@ class ControlDisplay {
 			["space", "space"]);
 
 		let time = new TimeDisplay(this.scene,
-			10,20);
+			10, 20);
 
 		requestAnimationFrame(() => { this.draw() })
 
