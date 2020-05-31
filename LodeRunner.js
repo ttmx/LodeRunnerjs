@@ -427,6 +427,8 @@ class GameControl {
 		this.time = 0;
 		this.currentLevel = parseInt(localStorage.getItem('currentLevel'));
 		this.highscores = JSON.parse(localStorage.getItem('highscores'));
+		if(this.highscores === null)
+			this.highscores = [];
 		this.worldGold = 0;
 		empty = new Empty();	// only one empty actor needed
 		this.ctx = document.getElementById("canvas1").getContext('2d');
