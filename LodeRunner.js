@@ -348,7 +348,8 @@ class Hero extends ActiveActor {
 
 	isFalling() {
 		return super.isFalling()
-			&& !(this.getBlockIn(SOUTH).isHole() && (control.worldActive[this.x][this.y + 1].isRobot));
+			&& !(this.getBlockIn(SOUTH).isHole()
+				&& (control.worldActive[this.x][this.y + 1].isRobot));
 	}
 
 	act(k) {
@@ -463,7 +464,8 @@ class Robot extends ActiveActor {
 						} else {
 							for (let newX = 0; newX < WORLD_WIDTH; newX++) {
 								for (let newY = 0; newY < WORLD_HEIGHT; newY++) {
-									if (control.world[newX][newY].isEmpty && control.world[newX][newY + 1].isFullyCollidable()) {
+									if (control.world[newX][newY].isEmpty
+										&& control.world[newX][newY + 1].isFullyCollidable()) {
 										return [newX, newY];
 									}
 								}
@@ -501,7 +503,8 @@ class Robot extends ActiveActor {
 	}
 
 	dropGoldAt(dx) {
-		if (control.world[this.x + dx][this.y + 1].isFullyCollidable() && control.world[this.x + dx][this.y].isEmpty
+		if (control.world[this.x + dx][this.y + 1].isFullyCollidable()
+			&& control.world[this.x + dx][this.y].isEmpty
 			&& control.worldActive[this.x + dx][this.y].isEmpty) {
 
 			this.placeGoldAt(this.x + dx, this.y);
@@ -580,7 +583,10 @@ class GameControl {
 		this.holesDuration = 5 * ANIMATION_EVENTS_PER_SECOND;
 		this.worldGold = 0;
 		this.holes = [];
-		this.winCondition = (() => { return control.worldGold == hero.collectedGold && hero.y == 0 });
+		this.winCondition = (() => {
+			return control.worldGold == hero.collectedGold
+				&& hero.y == 0
+		});
 		this.world = this.createMatrix();
 		this.worldActive = this.createMatrix();
 	}
@@ -734,11 +740,13 @@ class GameControl {
 		let animator = setInterval(() => {
 			iteration++;
 			this.ctx.fillStyle = "#81A1C1"
-			this.ctx.fillRect(0, 0, iteration * (interval / 5000) * this.ctx.canvas.width, this.ctx.canvas.height);
+			this.ctx.fillRect(0, 0, iteration * (interval / 5000) * this.ctx.canvas.width,
+				this.ctx.canvas.height);
 			this.ctx.fillStyle = "#4C566A";
 			this.ctx.fillRect(100, 100, 300, 50);
 			this.ctx.fillStyle = "#81A1C1"
-			this.ctx.fillText("Level Completed", this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
+			this.ctx.fillText("Level Completed", this.ctx.canvas.width / 2,
+				this.ctx.canvas.height / 2);
 			if (iteration >= 5000 / interval)
 				clearInterval(animator);
 		}, interval);
@@ -777,9 +785,13 @@ class TimeDisplay extends Display {
 	draw() {
 		this.scene.ctx.font = "15px bitFont";
 		this.scene.ctx.fillStyle = "#BF616A";
-		this.scene.ctx.fillText("Time: " + ((new Date().getTime() - control.starttime) / 1000).toFixed(1) + "s", this.x, this.y);
-		this.scene.ctx.fillText("Lowest: " + (control.highscores[control.currentLevel] / 1000).toFixed(1) + "s", this.x, this.y + 25);
-		this.scene.ctx.fillText("Gold: " + hero.collectedGold + "/" + control.worldGold, this.x, this.y + 50);
+		this.scene.ctx.fillText("Time: " +
+			((new Date().getTime() - control.starttime) / 1000).toFixed(1) + "s", this.x, this.y);
+		this.scene.ctx.fillText("Lowest: " +
+			(control.highscores[control.currentLevel] / 1000).toFixed(1) +
+			"s", this.x, this.y + 25);
+		this.scene.ctx.fillText("Gold: " +
+			hero.collectedGold + "/" + control.worldGold, this.x, this.y + 50);
 	}
 
 }
