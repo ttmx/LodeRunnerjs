@@ -363,7 +363,6 @@ class Hero extends ActiveActor {
 	}
 
 	pickUpGold() {
-		console.log("gold: " + this.collectedGold);
 		super.pickUpGold();
 		if (this.collectedGold >= control.worldGold)
 			control.showExit();
@@ -527,10 +526,8 @@ class GameControl {
 		control = this;
 		this.defaultGameLogic();
 		this.currentLevel = parseInt(localStorage.getItem('currentLevel'));
-		console.log(this.currentLevel);
 		if (isNaN(this.currentLevel))
 			this.currentLevel = 1;
-		console.log(this.currentLevel);
 		this.highscores = JSON.parse(localStorage.getItem('highscores'));
 		if (this.highscores === null)
 			this.highscores = [];
@@ -594,7 +591,7 @@ class GameControl {
 		this.clearLevel();
 		this.starttime = new Date().getTime();
 		this.currentLevel = level + 1;
-		localStorage.setItem('currentLevel', level + 1);
+		localStorage.setItem('currentLevel', level);
 		let map = MAPS[level];  // -1 because levels start at 1
 		for (let x = 0; x < WORLD_WIDTH; x++) {
 			for (let y = 0; y < WORLD_HEIGHT; y++) {
