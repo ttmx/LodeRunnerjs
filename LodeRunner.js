@@ -690,7 +690,9 @@ class GameControl {
 
 
 	loseLevel() {
-		setTimeout(() => { this.clearLevel(); this.loadLevel(this.currentLevel); }, 600);
+		this.clearLevel();
+		this.drawText("You Died!",1000);
+		setTimeout(() => { this.loadLevel(this.currentLevel); }, 1400);
 	}
 
 	keyDownEvent(k) {
@@ -715,21 +717,21 @@ class GameControl {
 		localStorage.setItem('highscores', JSON.stringify(highscores));
 	}
 
-	drawWin() {
+	drawText(textToDraw,duration) {
 		this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 		this.ctx.font = "20px bitFont";
 		this.ctx.textAlign = "center";
-		let interval = 1000 / 60;
+		let interval = 1000 / 30;
 		let iteration = 0;
 		let animator = setInterval(() => {
 			iteration++;
 			this.ctx.fillStyle = "#81A1C1"
-			this.ctx.fillRect(0, 0, iteration * (interval / 5000) * this.ctx.canvas.width, this.ctx.canvas.height);
+			this.ctx.fillRect(0, 0, iteration * (interval / duration) * this.ctx.canvas.width, this.ctx.canvas.height);
 			this.ctx.fillStyle = "#4C566A";
 			this.ctx.fillRect(100, 100, 300, 50);
 			this.ctx.fillStyle = "#81A1C1"
-			this.ctx.fillText("Level Completed", this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
-			if (iteration >= 5000 / interval)
+			this.ctx.fillText(textToDraw, this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
+			if (iteration >= duration / interval)
 				clearInterval(animator);
 		}, interval);
 	}
@@ -737,7 +739,7 @@ class GameControl {
 	winLevel() {
 		this.clearLevel();
 		this.storeHighscore();
-		this.drawWin();
+		this.drawText("Level Completed",5000);
 		setTimeout(() => { this.loadLevel(this.currentLevel + 1) }, 6000);
 
 	}
