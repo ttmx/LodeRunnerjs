@@ -228,12 +228,10 @@ class ActiveActor extends Actor {
 	}
 
 	attemptMove(dx, dy) {
-		if (!this.invalidMove([dx, dy]) && this.inBounds(dx, dy)) {
-			if (dx == 0) {
-				return this.verticalMove(dy);
-			} else {
-				return this.horizontalMove(dx);
-			}
+		if (dx == 0) {
+			return this.verticalMove(dy);
+		} else {
+			return this.horizontalMove(dx);
 		}
 	}
 }
@@ -310,7 +308,7 @@ class Hero extends ActiveActor {
 		return control.world[this.x + this.numberedDirection()][this.y + 1];
 	}
 
-	breakBlock() {
+	breakAimedBlock() {
 		if (this.aimedBlock().breaks
 			&& !control.world[this.x + this.numberedDirection()][this.y].isFullyCollidable()) {
 
@@ -330,7 +328,7 @@ class Hero extends ActiveActor {
 	}
 
 	shoot() {
-		this.breakBlock();
+		this.breakAimedBlock();
 		this.recoil();
 		this.backgroundAction();
 	}
@@ -350,7 +348,12 @@ class Hero extends ActiveActor {
 				this.shoot();
 				this.imageName = `hero_shoots_${this.direction}`;
 			} else {
-				this.attemptMove(dx, dy);
+				if (!this.invalidMove([dx, dy])
+					&& this.inBounds(dx, dy)
+					&& !(control.worldActive[this.x + dx][this.y + dy] instanceof Robot)) {
+
+					this.attemptMove(dx, dy);
+				}
 				this.imageName = `hero_${this.backgroundAction()}_${this.direction}`;
 			}
 		}
@@ -517,7 +520,7 @@ class GameControl {
 		this.defaultGameLogic();
 		this.currentLevel = parseInt(localStorage.getItem('currentLevel'));
 		console.log(this.currentLevel);
-		if(isNaN(this.currentLevel))
+		if (isNaN(this.currentLevel))
 			this.currentLevel = 1;
 		console.log(this.currentLevel);
 		this.highscores = JSON.parse(localStorage.getItem('highscores'));
@@ -576,14 +579,14 @@ class GameControl {
 	}
 	loadLevel(level) {
 		this.worldGold = 0;
-		level = ((level-1)%MAPS.length);
+		level = ((level - 1) % MAPS.length);
 		this.broken = [];
 		if (level < 0 || level >= MAPS.length)
 			fatalError("Invalid level " + level)
 		this.clearLevel();
 		this.starttime = new Date().getTime();
-		this.currentLevel = level+1;
-		localStorage.setItem('currentLevel',level+1);
+		this.currentLevel = level + 1;
+		localStorage.setItem('currentLevel', level + 1);
 		let map = MAPS[level];  // -1 because levels start at 1
 		for (let x = 0; x < WORLD_WIDTH; x++) {
 			for (let y = 0; y < WORLD_HEIGHT; y++) {
@@ -673,7 +676,7 @@ class GameControl {
 		let highscores = JSON.parse(localStorage.getItem('highscores'));
 		if (highscores === null)
 			highscores = [];
-		if(highscores[this.currentLevel]>timeSpan || isNaN(highscores[this.currentLevel]))
+		if (highscores[this.currentLevel] > timeSpan || isNaN(highscores[this.currentLevel]))
 			highscores[this.currentLevel] = timeSpan;
 		localStorage.setItem('highscores', JSON.stringify(highscores));
 	}
@@ -730,9 +733,9 @@ class TimeDisplay extends Display {
 	draw() {
 		this.scene.ctx.font = "15px bitFont";
 		this.scene.ctx.fillStyle = "#BF616A";
-		this.scene.ctx.fillText("Time: "+ ((new Date().getTime()-control.starttime)/1000).toFixed(1) + "s" ,this.x, this.y);
-		this.scene.ctx.fillText("Lowest: "+ (control.highscores[control.currentLevel]/1000).toFixed(1) + "s" ,this.x, this.y+25);
-		this.scene.ctx.fillText("Gold: "+ hero.collectedGold+"/"+control.worldGold ,this.x, this.y+50);
+		this.scene.ctx.fillText("Time: " + ((new Date().getTime() - control.starttime) / 1000).toFixed(1) + "s", this.x, this.y);
+		this.scene.ctx.fillText("Lowest: " + (control.highscores[control.currentLevel] / 1000).toFixed(1) + "s", this.x, this.y + 25);
+		this.scene.ctx.fillText("Gold: " + hero.collectedGold + "/" + control.worldGold, this.x, this.y + 50);
 	}
 
 }
