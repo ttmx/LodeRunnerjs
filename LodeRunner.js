@@ -370,7 +370,9 @@ class Hero extends ActiveActor {
 		this.hide();
 		control.lastKey = control.getKey();
 		this.act(control.lastKey);
-		this.show();
+		if (!(control.worldActive[this.x][this.y] instanceof Robot)) {
+			this.show();
+		}
 	}
 }
 
