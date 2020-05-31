@@ -459,7 +459,9 @@ class Robot extends ActiveActor {
 				}
 			}
 		}
-		this.imageName = `robot_${this.backgroundAction()}_${this.direction}`;
+		if (!this.isInHole()) {
+			this.imageName = `robot_${this.backgroundAction()}_${this.direction}`;
+		}
 	}
 
 	placeGoldAt(x, y) {
