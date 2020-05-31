@@ -320,7 +320,7 @@ class Hero extends ActiveActor {
 		let nDirection = this.numberedDirection();
 		let move = [EAST, null, WEST];
 		if (this.inBounds(-nDirection, 0)
-			&& !this.getBlockIn(move[nDirection + 1]).collidesWithAny([move[-nDirection + 1]])
+			&& !this.getBlockIn(move[-nDirection + 1]).collidesWithAny([move[nDirection + 1]])
 			&& control.world[this.x - nDirection][this.y + 1].collidesWithAny([NORTH])) {
 
 			this.x -= nDirection;
