@@ -248,7 +248,10 @@ class Chimney extends PassiveActor {
 }
 
 class Empty extends PassiveActor {
-	constructor() { super(-1, -1, "empty", PassiveActor.fullyUncollidable()); }
+	constructor() {
+		super(-1, -1, "empty", PassiveActor.fullyUncollidable());
+		this.isEmpty = true;
+	}
 	show() { }
 	hide() { }
 }
@@ -335,7 +338,7 @@ class Hero extends ActiveActor {
 
 	isFalling() {
 		return super.isFalling()
-			&& !(this.getBlockIn(SOUTH).isHole() && (control.worldActive[this.x][this.y + 1] instanceof Robot));
+			&& !(this.getBlockIn(SOUTH).isHole() && (control.worldActive[this.x][this.y + 1].isRobot));
 	}
 
 	act(k) {
@@ -350,7 +353,7 @@ class Hero extends ActiveActor {
 				return;
 			} else if (!this.invalidMove([dx, dy])) {
 				if (this.inBounds(dx, dy)
-					&& !(control.worldActive[this.x + dx][this.y + dy] instanceof Robot)) {
+					&& !(control.worldActive[this.x + dx][this.y + dy].isRobot)) {
 
 					this.attemptMove(dx, dy);
 				}
@@ -370,7 +373,7 @@ class Hero extends ActiveActor {
 		this.hide();
 		control.lastKey = control.getKey();
 		this.act(control.lastKey);
-		if (!(control.worldActive[this.x][this.y] instanceof Robot)) {
+		if (!(control.worldActive[this.x][this.y].isRobot)) {
 			this.show();
 		}
 	}
@@ -385,6 +388,7 @@ class Robot extends ActiveActor {
 		this.nextGoldPickup = 0;
 		this.escapeHoleTime = null;
 		this.nextFallIntoHole = 0;
+		this.isRobot = true;
 	}
 
 	pickUpGold() {
@@ -424,7 +428,7 @@ class Robot extends ActiveActor {
 	isFalling() {
 
 		if (super.isFalling()
-			&& !(control.worldActive[this.x][this.y + 1] instanceof Robot)
+			&& !(control.worldActive[this.x][this.y + 1].isRobot)
 			&& !this.isInHole()) {
 
 			if (this.getBlockIn(SOUTH).isHole()) {
@@ -453,7 +457,7 @@ class Robot extends ActiveActor {
 				let moved = false;
 				for (let i = 0; i < moves.length && moves[i] != null && !moved; i++) {
 					const [dx, dy] = moves[i];
-					if (!(control.worldActive[this.x + dx][this.y + dy] instanceof Robot)) {
+					if (!(control.worldActive[this.x + dx][this.y + dy].isRobot)) {
 						moved = super.attemptMove(dx, dy);
 					}
 				}
@@ -472,8 +476,8 @@ class Robot extends ActiveActor {
 	}
 
 	dropGoldAt(dx) {
-		if (control.world[this.x + dx][this.y + 1].isFullyCollidable() && control.world[this.x + dx][this.y] instanceof Empty
-			&& control.worldActive[this.x + dx][this.y] instanceof Empty) {
+		if (control.world[this.x + dx][this.y + 1].isFullyCollidable() && control.world[this.x + dx][this.y].isEmpty
+			&& control.worldActive[this.x + dx][this.y].isEmpty) {
 
 			this.placeGoldAt(this.x + dx, this.y);
 			return true;
@@ -494,7 +498,7 @@ class Robot extends ActiveActor {
 
 	escapeHole() {
 		if (control.world[this.x][this.y - 1].isFullyUncollidable()
-			&& control.worldActive[this.x][this.y - 1] instanceof Empty) {
+			&& control.worldActive[this.x][this.y - 1].isEmpty) {
 
 			this.y--;
 			this.nextFallIntoHole = control.time + 6;
