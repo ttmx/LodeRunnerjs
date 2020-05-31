@@ -671,6 +671,11 @@ class GameControl {
 			}
 		}
 	}
+
+	heroDied() {
+		return !(this.worldActive[hero.x][hero.y] instanceof Hero);
+	}
+
 	animationEvent() {
 		control.time++;
 		control.updateActiveActorAnimations();
@@ -678,7 +683,16 @@ class GameControl {
 		if (control.winCondition()) {
 			control.winLevel();
 		}
+		if (control.heroDied()) {
+			control.loseLevel();
+		}
 	}
+
+
+	loseLevel() {
+		setTimeout(() => { this.clearLevel(); this.loadLevel(this.currentLevel); }, 600);
+	}
+
 	keyDownEvent(k) {
 		control.key = k.keyCode;
 	}
